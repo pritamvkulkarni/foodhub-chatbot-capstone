@@ -17,14 +17,14 @@ if "chat_history" not in st.session_state:
 # --- Header: Logo + Title Side-by-Side ---
 col1, col2 = st.columns([1, 5])
 with col1:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/6/6e/FoodHub_Logo.png", width=80)  # Replace with your logo
+    st.image("foodhub_logo.png", width=80)  # Replace with your logo
 with col2:
     st.markdown("<h1 style='color: #ff4b4b; padding-top: 10px;'>Welcome to FoodHub Chatbot</h1>", unsafe_allow_html=True)
 
 # --- Login Page ---
 if not st.session_state.authenticated:
     with st.form("login_form"):
-        customer_id = st.text_input("Customer ID")
+        customer_id = st.text_input("Customer ID", placeholder="eg: C1011")
         password = st.text_input("Password", type="password")
         submitted = st.form_submit_button("Sign In")
 
@@ -33,7 +33,7 @@ if not st.session_state.authenticated:
                 st.session_state.authenticated = True
                 st.session_state.customer_id = customer_id
                 st.session_state.chat_history = []
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("❌ Invalid credentials. Please try again.")
 
@@ -78,9 +78,11 @@ if st.session_state.authenticated:
             st.session_state.authenticated = False
             st.session_state.customer_id = None
             st.session_state.chat_history = []
-            st.experimental_rerun()
+            st.session_state.chat_input = ""  # Clear prompt
+            st.rerun()
         else:
             raw = order_query_tool_func(st.session_state.customer_id, user_input)
             final = answer_tool_func(raw)
             st.session_state.chat_history.append(("You", user_input, "Bot", final))
-            st.experimental_rerun()  # Refresh to show new message at top
+            st.session_state.chat_input = ""  # Clear prompt
+            st.rerun()  # Refresh to show new message at top
