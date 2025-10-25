@@ -1,5 +1,5 @@
 import re
-from agent.llm_models import llm_high_model_3
+from agent.llm_models import llm_high_model
 from langchain.agents import initialize_agent 
 
 # Answer Tool: Refines raw response into customer-friendly message
@@ -14,7 +14,7 @@ def answer_tool_func(raw_response: str) -> str:
         "Raw data:\n"
         f"{raw_response}"
     )
-    return llm_high_model_3.invoke(prompt).content
+    return llm_high_model.invoke(prompt).content
 
 answer_tool = Tool(
     name="AnswerTool",

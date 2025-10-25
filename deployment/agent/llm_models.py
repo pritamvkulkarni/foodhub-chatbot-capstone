@@ -8,13 +8,13 @@ LOW_TEMP  = 0.0 # Low  Temperature
 groq_api_key = userdata.get('GROQ_API_KEY')
 
 # High creativity LLM
-llm_high_model_3 = ChatGroq(
+llm_high_model = ChatGroq(
     model="meta-llama/llama-4-scout-17b-16e-instruct",
     temperature=HIGH_TEMP,
     groq_api_key=groq_api_key)
 
 # Low creativity (deterministic) LLM
-llm_model_3 = ChatGroq(
+llm_model = ChatGroq(
     model="meta-llama/llama-4-scout-17b-16e-instruct",
     temperature=LOW_TEMP,
     groq_api_key=groq_api_key

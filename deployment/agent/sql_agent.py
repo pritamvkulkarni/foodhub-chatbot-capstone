@@ -2,7 +2,7 @@ from langchain.sql_database import SQLDatabase
 from langchain.agents.agent_toolkits import SQLDatabaseToolkit
 from langchain.agents import create_sql_agent, AgentType
 from langchain_groq import ChatGroq
-from deployment.agent.llm_models import llm_model_3
+from agent.llm_models import llm_model
 from langchain_core.messages import SystemMessage
 from langchain.agents import AgentExecutor, Tool
 
@@ -28,13 +28,13 @@ system_message = (
 # Initialize the SQL database toolkit by combining the database connection (db)
 # and the chosen LLM model (llm_model). The toolkit allows the agent to query
 # the database intelligently using the language model.
-toolkit = SQLDatabaseToolkit(db=db, llm=llm_model_3)  # Pass the llm object directly
+toolkit = SQLDatabaseToolkit(db=db, llm=llm_model)  # Pass the llm object directly
 
 # Create the SQL agent using the specified LLM and toolkit.
 # The system_message provides role/context (e.g., "You are a helpful SQL assistant").
 # verbose=False disables extra console logs for cleaner output.
 db_agent = create_sql_agent(
-        llm=llm_model_3,
+        llm=llm_model,
         toolkit=toolkit,
         verbose=False,
         system_message=SystemMessage(system_message)
@@ -57,7 +57,7 @@ def order_query_tool_func(customer_id: str, user_input: str) -> str:
         f"Does the following query express an intent to cancel an order? "
         f"Only answer 'yes' or 'no'.\n\nQuery: {user_input}"
     )
-    intent_response = llm_model_3.invoke(intent_check_prompt).content.strip().lower()
+    intent_response = llm_model.invoke(intent_check_prompt).content.strip().lower()
 
     if intent_response == "yes":
         return (
