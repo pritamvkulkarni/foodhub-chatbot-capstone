@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . .
 
 # Install Python dependencies listed in requirements.txt
-RUN pip3 install --no-cache-dir -r deployment/requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 RUN useradd -m -u 1000 user
 USER user
