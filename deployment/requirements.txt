@@ -9,4 +9,3 @@ numpy==1.26
 pandas
 matplotlib
 seaborn
-sqlite3
