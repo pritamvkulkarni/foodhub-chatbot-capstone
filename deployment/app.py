@@ -2,9 +2,38 @@ import streamlit as st
 from agent.sql_agent import order_query_tool_func
 from agent.chat_agent import answer_tool_func
 from scripts.validate_customer import is_valid_customer
+import base64
 
 # --- App Configuration ---
 st.set_page_config(page_title="FoodHub Chatbot", page_icon="🍽️", layout="centered")
+
+# --- Load Local JPG Background Image ---
+def get_base64_image(image_path):
+    with open(image_path, "rb") as img_file:
+        encoded = base64.b64encode(img_file.read()).decode()
+    return f"data:image/jpeg;base64,{encoded}"
+
+image_base64 = get_base64_image("foodhub_background.jpg")  # Replace with your actual path
+
+# --- Background Image with Overlay ---
+st.markdown(
+    f"""
+    <style>
+    body {{
+        background-image: url("{image_base64}");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }}
+    .main > div {{
+        background-color: rgba(255, 255, 255, 0.85);
+        padding: 20px;
+        border-radius: 10px;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # --- Session State Initialization ---
 if "authenticated" not in st.session_state:
