@@ -1,5 +1,6 @@
 import streamlit as st
-from agent.chat_agent import order_query_tool_func, answer_tool_func
+from agent.sql_agent import order_query_tool_func
+from agent.chat_agent import answer_tool_func
 from scripts.validate_customer import is_valid_customer
 import streamlit.session_state as session
 
