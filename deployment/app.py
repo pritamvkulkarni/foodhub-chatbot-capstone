@@ -7,7 +7,7 @@ from scripts.validate_customer import is_valid_customer
 st.set_page_config(page_title="FoodHub Chatbot", page_icon="🍽️", layout="centered")
 
 # --- Logo and Branding ---
-st.image("foodHub_logo.png", width=120)  # Replace with your logo URL
+st.image("foodhub_logo.png", width=120)  # Replace with your logo URL
 st.markdown("<h1 style='text-align: center; color: #ff4b4b;'>Welcome to FoodHub Chatbot</h1>", unsafe_allow_html=True)
 
 # --- Session State Initialization ---
