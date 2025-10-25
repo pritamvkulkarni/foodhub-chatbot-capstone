@@ -1,11 +1,9 @@
 
-import userdata
-
 HIGH_TEMP = 1.0 # High Temperature
 LOW_TEMP  = 0.0 # Low  Temperature
 
 #TODO: remove hardcoding
-groq_api_key = userdata.get('GROQ_API_KEY')
+groq_api_key = os.getenv('GROQ_API_KEY')
 
 # High creativity LLM
 llm_high_model = ChatGroq(
