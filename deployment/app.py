@@ -6,10 +6,6 @@ from scripts.validate_customer import is_valid_customer
 # --- App Configuration ---
 st.set_page_config(page_title="FoodHub Chatbot", page_icon="🍽️", layout="centered")
 
-# --- Logo and Branding ---
-st.image("foodhub_logo.png", width=120)  # Replace with your logo URL
-st.markdown("<h1 style='text-align: center; color: #ff4b4b;'>Welcome to FoodHub Chatbot</h1>", unsafe_allow_html=True)
-
 # --- Session State Initialization ---
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
@@ -17,6 +13,13 @@ if "customer_id" not in st.session_state:
     st.session_state.customer_id = None
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+
+# --- Header: Logo + Title Side-by-Side ---
+col1, col2 = st.columns([1, 5])
+with col1:
+    st.image("https://upload.wikimedia.org/wikipedia/commons/6/6e/FoodHub_Logo.png", width=80)  # Replace with your logo
+with col2:
+    st.markdown("<h1 style='color: #ff4b4b; padding-top: 10px;'>Welcome to FoodHub Chatbot</h1>", unsafe_allow_html=True)
 
 # --- Login Page ---
 if not st.session_state.authenticated:
@@ -30,17 +33,47 @@ if not st.session_state.authenticated:
                 st.session_state.authenticated = True
                 st.session_state.customer_id = customer_id
                 st.session_state.chat_history = []
-                st.success("✅ Login successful!")
+                st.experimental_rerun()
             else:
                 st.error("❌ Invalid credentials. Please try again.")
 
 # --- Chatbot Interface ---
 if st.session_state.authenticated:
     st.markdown(f"<h3 style='color:#ff4b4b;'>Hi {st.session_state.customer_id}, how can I help you today?</h3>", unsafe_allow_html=True)
-    user_input = st.text_input("Type your message below (type 'exit' to logout):")
 
-    if st.button("Send") and user_input:
-        if user_input.lower().strip() == "exit":
+    # --- Display Chat History (top-down, user then bot) ---
+    for user_label, user_msg, bot_label, bot_msg in st.session_state.chat_history:
+        # User message
+        st.markdown(
+            f"""
+            <div style='text-align:right; padding:8px; margin-bottom:5px;'>
+                <div style='display:inline-block; background-color:#f0f0f0; color:#333; padding:10px 15px; border-radius:15px; max-width:70%;'>
+                    {user_msg}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        # Bot response
+        st.markdown(
+            f"""
+            <div style='text-align:left; padding:8px; margin-bottom:15px;'>
+                <div style='display:inline-block; background-color:#ff4b4b; color:#fff; padding:10px 15px; border-radius:15px; max-width:70%;'>
+                    {bot_msg}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    # --- Chat Prompt at Bottom ---
+    st.markdown("---")
+    user_input = st.text_input("Type your message below (type 'exit' to logout):", key="chat_input")
+    send_button = st.button("Send")
+
+    if send_button and user_input:
+        exit_keywords = ["exit", "quit", "stop", "bye", "goodbye", "end"]
+        if any(keyword in user_input.lower() for keyword in exit_keywords):
             st.info("👋 You’ve exited the chat. Please log in again to continue.")
             st.session_state.authenticated = False
             st.session_state.customer_id = None
@@ -49,30 +82,5 @@ if st.session_state.authenticated:
         else:
             raw = order_query_tool_func(st.session_state.customer_id, user_input)
             final = answer_tool_func(raw)
-            st.session_state.chat_history.append(("You", user_input))
-            st.session_state.chat_history.append(("Bot", final))
-
-    # --- Display Chat History (latest on top) ---
-    for sender, message in reversed(st.session_state.chat_history):
-        if sender == "You":
-            st.markdown(
-                f"""
-                <div style='text-align:right; padding:8px; margin-bottom:10px;'>
-                    <div style='display:inline-block; background-color:#f0f0f0; color:#333; padding:10px 15px; border-radius:15px; max-width:70%;'>
-                        {message}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-        else:
-            st.markdown(
-                f"""
-                <div style='text-align:left; padding:8px; margin-bottom:10px;'>
-                    <div style='display:inline-block; background-color:#ff4b4b; color:#fff; padding:10px 15px; border-radius:15px; max-width:70%;'>
-                        {message}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+            st.session_state.chat_history.append(("You", user_input, "Bot", final))
+            st.experimental_rerun()  # Refresh to show new message at top
