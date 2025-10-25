@@ -9,7 +9,7 @@ from langchain.agents import AgentExecutor, Tool
 # Initialize a SQLDatabase connection from the local SQLite file.
 # The f-string dynamically inserts the path of the database file stored in `local_db`.
 # This allows the LLM agent to query the specified SQLite database.
-db = SQLDatabase.from_uri(f"sqlite:///foodhub-chatbot/data/customer_orders.db")
+db = SQLDatabase.from_uri(f"sqlite:///customer_orders.db")
 
 system_message = (
     "You are an AI SQL agent for the Food Hub orders database.\n"
