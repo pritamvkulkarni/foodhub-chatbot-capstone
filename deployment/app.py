@@ -13,6 +13,8 @@ if "customer_id" not in st.session_state:
     st.session_state.customer_id = None
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
+if "clear_input" not in st.session_state:
+    st.session_state.clear_input = False
 
 # --- Header: Logo + Title Side-by-Side ---
 col1, col2 = st.columns([1, 5])
@@ -66,9 +68,14 @@ if st.session_state.authenticated:
             unsafe_allow_html=True
         )
 
+    # --- Clear input if flagged ---
+    if st.session_state.clear_input:
+        st.session_state.chat_input = ""
+        st.session_state.clear_input = False
+
     # --- Chat Prompt at Bottom ---
     st.markdown("---")
-    user_input = st.text_input("Type your message below (type 'exit' to logout):", key="chat_input")
+    user_input = st.text_input("", placeholder="Type your message below (type 'exit' to logout):", key="chat_input")
     send_button = st.button("Send")
 
     if send_button and user_input:
@@ -78,11 +85,12 @@ if st.session_state.authenticated:
             st.session_state.authenticated = False
             st.session_state.customer_id = None
             st.session_state.chat_history = []
-            st.session_state.chat_input = ""  # Clear prompt
+            st.session_state.clear_input = True
             st.rerun()
         else:
             raw = order_query_tool_func(st.session_state.customer_id, user_input)
             final = answer_tool_func(raw)
             st.session_state.chat_history.append(("You", user_input, "Bot", final))
-            st.session_state.chat_input = ""  # Clear prompt
-            st.rerun()  # Refresh to show new message at top
+            st.session_state.clear_input = True
+            st.rerun()
+
