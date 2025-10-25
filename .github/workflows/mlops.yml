@@ -24,5 +24,14 @@ jobs:
       run: |
         docker build -f deployment/Dockerfile -t foodhub-chatbot .
 
-    - name: Manual deploy step
-      run: echo "Deploy manually to Hugging Face Spaces with Docker SDK"
+  deploy-hosting:
+    runs-on: ubuntu-latest
+    needs: [model-traning,data-prep,register-dataset]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Dependencies
+        run: pip install -r tourism_project/requirements.txt
+      - name: Push files to Frontend Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: python tourism_project/hosting/hosting.py

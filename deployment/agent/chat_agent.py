@@ -1,5 +1,6 @@
 import re
-from agents.llm_models import llm_high_model_3
+from agent.llm_models import llm_high_model_3
+from langchain.agents import initialize_agent 
 
 # Answer Tool: Refines raw response into customer-friendly message
 def answer_tool_func(raw_response: str) -> str:
@@ -21,52 +22,52 @@ answer_tool = Tool(
     description="Refines raw order data into a customer-friendly response"
 )
 
-# === Chat Agent Initialization ===
+# # === Chat Agent Initialization ===
 
-tools = [order_query_tool, answer_tool]
+# tools = [order_query_tool, answer_tool]
 
-chat_agent = initialize_agent(
-    tools=tools,
-    llm=llm_high_model_3,
-    agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-    verbose=True
-)
+# chat_agent = initialize_agent(
+#     tools=tools,
+#     llm=llm_high_model_3,
+#     agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+#     verbose=True
+# )
 
-# === Chatbot Loop with Session ===
+# # === Chatbot Loop with Session ===
 
-def chatagent():
-    print("\nWelcome to OrderBot! Let's get started.")
-    customer_id = input("Please enter your Customer ID: ").strip()
+# def chatagent():
+#     print("\nWelcome to OrderBot! Let's get started.")
+#     customer_id = input("Please enter your Customer ID: ").strip()
 
-    if not is_valid_customer(customer_id):
-        print(f"Given customer id is invalid. Please check and try again.")
-        return
+#     if not is_valid_customer(customer_id):
+#         print(f"Given customer id is invalid. Please check and try again.")
+#         return
 
-    print(f"\nSession started for Customer ID: {customer_id}. Type 'exit' to end the chat.")
+#     print(f"\nSession started for Customer ID: {customer_id}. Type 'exit' to end the chat.")
 
-    while True:
-        user_input = input("You: ").strip()
-        if user_input.lower() == "exit":
-            farewell_prompt = (
-                "The user is ending the chat session. Please respond with a warm, polite farewell message "
-                "that thanks them for using the service and invites them to return if they need help again."
-            )
-            farewell_response = llm_high_model_3.invoke(farewell_prompt).content
-            print(f"Bot: {farewell_response}")
-            break
+#     while True:
+#         user_input = input("You: ").strip()
+#         if user_input.lower() == "exit":
+#             farewell_prompt = (
+#                 "The user is ending the chat session. Please respond with a warm, polite farewell message "
+#                 "that thanks them for using the service and invites them to return if they need help again."
+#             )
+#             farewell_response = llm_high_model_3.invoke(farewell_prompt).content
+#             print(f"Bot: {farewell_response}")
+#             break
 
-        try:
-            # Step 1: Query order details using SQL Agent
-            raw_response = order_query_tool_func(customer_id,user_input)
+#         try:
+#             # Step 1: Query order details using SQL Agent
+#             raw_response = order_query_tool_func(customer_id,user_input)
 
-            # Step 2: Refine response using Answer Tool
-            final_response = answer_tool_func(raw_response)
+#             # Step 2: Refine response using Answer Tool
+#             final_response = answer_tool_func(raw_response)
 
-            print(f"Bot: {final_response}")
-        except Exception as e:
-            print(f"Error: {e}")
+#             print(f"Bot: {final_response}")
+#         except Exception as e:
+#             print(f"Error: {e}")
 
-# === Run the Chatbot ===
+# # === Run the Chatbot ===
 
-if __name__ == "__main__":
-    chatagent()
+# if __name__ == "__main__":
+#     chatagent()

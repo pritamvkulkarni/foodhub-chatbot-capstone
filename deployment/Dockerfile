@@ -5,7 +5,7 @@ FROM python:3.9
 WORKDIR /app
 
 # Copy all files from the current directory on the host to the container's /app directory
-COPY . /app
+COPY . .
 
 # Install Python dependencies listed in requirements.txt
 RUN pip3 install --no-cache-dir -r deployment/requirements.txt
