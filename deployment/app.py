@@ -36,6 +36,28 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# Align test to right
+st.markdown(
+    """
+    <style>
+    .stApp {
+        display: flex;
+        justify-content: flex-end;
+        padding-right: 50px;
+    }
+    .main > div {
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: 0;
+        background-color: rgba(255, 255, 255, 0.85);
+        padding: 20px;
+        border-radius: 10px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # --- Session State Initialization ---
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
@@ -49,7 +71,7 @@ if "clear_input" not in st.session_state:
 # --- Header: Logo + Title Side-by-Side ---
 col1, col2 = st.columns([1, 5])
 with col1:
-    st.image("foodhub_logo.png", width=80)
+    st.image("foodhub_logo.png", width=100)
 with col2:
     st.markdown("<h1 style='color: #ff4b4b; padding-top: 10px;'>Welcome to FoodHub Chatbot</h1>", unsafe_allow_html=True)
 
