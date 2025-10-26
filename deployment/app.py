@@ -7,10 +7,6 @@ from agent.chat_agent import answer_tool_func
 
 # --- App Configuration ---
 st.set_page_config(page_title="FoodHub Chatbot", page_icon="🍽️", layout="centered")
-st.markdown(
-    "<div style='font-size:16px; color:#333; margin-bottom:20px;'>Please provide your customer ID and password to continue.</div>",
-    unsafe_allow_html=True
-)
 
 # --- Load Local JPG Background Image ---
 def get_base64_image(image_path):
@@ -83,6 +79,16 @@ if st.session_state.get("farewell_triggered", False):
 # --- Login Page ---
 if not st.session_state.authenticated:
     with st.form("login_form"):
+        # Message above the login box
+        st.markdown(
+            "<div style='text-align:right; padding-right:80px; font-size:18px; font-weight:bold; color:#333;'>Please enter your Customer ID and password to continue.</div>",
+            unsafe_allow_html=True
+        )
+
+        # Right-aligned login box
+        st.markdown("<div class='right-align-container'><div class='login-box'>", unsafe_allow_html=True)
+        st.title("🍔 Welcome to FoodHub")
+    
         customer_id = st.text_input("Customer ID", placeholder="eg: C1018")
         password = st.text_input("Password", type="password")
         submitted = st.form_submit_button("Log In")
