@@ -2,7 +2,8 @@ import streamlit as st
 import base64
 import time
 from scripts.validate_customer import is_valid_customer
-from deployment.agents.chat_agent import order_query_tool_func, answer_tool_func
+from deployment.agents.sql_agent import order_query_tool_func
+from deployment.agents.chat_agent import answer_tool_func
 
 # --- App Configuration ---
 st.set_page_config(page_title="FoodHub Chatbot", page_icon="🍽️", layout="centered")
@@ -133,7 +134,7 @@ if st.session_state.authenticated:
     with col1:
         st.text_input(
             "",
-            placeholder="Type your message below (type 'exit' to logout):",
+            placeholder="Type your message here",
             key="chat_input",
             on_change=handle_input
         )
