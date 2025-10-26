@@ -25,34 +25,18 @@ st.markdown(
         background-size: cover;
         background-repeat: no-repeat;
         background-attachment: fixed;
-    }}
-    .main > div {{
-        background-color: rgba(255, 255, 255, 0.85);
-        padding: 20px;
-        border-radius: 10px;
-    }}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# Align test to right
-st.markdown(
-    """
-    <style>
-    .stApp {
         display: flex;
         justify-content: flex-end;
         padding-right: 50px;
-    }
-    .main > div {
+    }}
+    .main > div {{
         max-width: 600px;
         margin-left: auto;
         margin-right: 0;
         background-color: rgba(255, 255, 255, 0.85);
         padding: 20px;
         border-radius: 10px;
-    }
+    }}
     </style>
     """,
     unsafe_allow_html=True
