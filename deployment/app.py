@@ -1,8 +1,8 @@
 import streamlit as st
-from agent.sql_agent import order_query_tool_func
-from agent.chat_agent import answer_tool_func
-from scripts.validate_customer import is_valid_customer
 import base64
+import time
+from scripts.validate_customer import is_valid_customer
+from deployment.agents.chat_agent import order_query_tool_func, answer_tool_func
 
 # --- App Configuration ---
 st.set_page_config(page_title="FoodHub Chatbot", page_icon="🍽️", layout="centered")
@@ -44,13 +44,22 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 if "clear_input" not in st.session_state:
     st.session_state.clear_input = False
+if "logged_out" not in st.session_state:
+    st.session_state.logged_out = False
 
 # --- Header: Logo + Title Side-by-Side ---
 col1, col2 = st.columns([1, 5])
 with col1:
-    st.image("foodhub_logo.png", width=80)  # Replace with your logo
+    st.image("foodhub_logo.png", width=80)
 with col2:
     st.markdown("<h1 style='color: #ff4b4b; padding-top: 10px;'>Welcome to FoodHub Chatbot</h1>", unsafe_allow_html=True)
+
+# --- Logout Message and Redirect ---
+if st.session_state.logged_out:
+    st.success("✅ You have been successfully logged out. Redirecting to login page…")
+    time.sleep(2.5)
+    st.session_state.logged_out = False
+    st.rerun()
 
 # --- Login Page ---
 if not st.session_state.authenticated:
@@ -60,7 +69,7 @@ if not st.session_state.authenticated:
         submitted = st.form_submit_button("Sign In")
 
         if submitted:
-            if is_valid_customer(customer_id) and password == "foodhub123":  # Replace with real auth logic
+            if is_valid_customer(customer_id) and password == "foodhub123":
                 st.session_state.authenticated = True
                 st.session_state.customer_id = customer_id
                 st.session_state.chat_history = []
@@ -72,9 +81,8 @@ if not st.session_state.authenticated:
 if st.session_state.authenticated:
     st.markdown(f"<h3 style='color:#ff4b4b;'>Hi {st.session_state.customer_id}, how can I help you today?</h3>", unsafe_allow_html=True)
 
-    # --- Display Chat History (top-down, user then bot) ---
+    # --- Display Chat History ---
     for user_label, user_msg, bot_label, bot_msg in st.session_state.chat_history:
-        # User message
         st.markdown(
             f"""
             <div style='text-align:right; padding:8px; margin-bottom:5px;'>
@@ -85,7 +93,6 @@ if st.session_state.authenticated:
             """,
             unsafe_allow_html=True
         )
-        # Bot response
         st.markdown(
             f"""
             <div style='text-align:left; padding:8px; margin-bottom:15px;'>
@@ -102,19 +109,16 @@ if st.session_state.authenticated:
         st.session_state.chat_input = ""
         st.session_state.clear_input = False
 
-    # --- Chat Prompt at Bottom ---
-    st.markdown("---")
-    user_input = st.text_input("", placeholder="Type your message below (type 'exit' to logout):", key="chat_input")
-    send_button = st.button("Send")
-
-    if send_button and user_input:
+    # --- Handle input ---
+    def handle_input():
+        user_input = st.session_state.chat_input
         exit_keywords = ["exit", "quit", "stop", "bye", "goodbye", "end"]
         if any(keyword in user_input.lower() for keyword in exit_keywords):
-            st.info("👋 You’ve exited the chat. Please log in again to continue.")
             st.session_state.authenticated = False
             st.session_state.customer_id = None
             st.session_state.chat_history = []
             st.session_state.clear_input = True
+            st.session_state.logged_out = True
             st.rerun()
         else:
             raw = order_query_tool_func(st.session_state.customer_id, user_input)
@@ -123,3 +127,25 @@ if st.session_state.authenticated:
             st.session_state.clear_input = True
             st.rerun()
 
+    # --- Chat Prompt at Bottom ---
+    st.markdown("---")
+    col1, col2 = st.columns([5, 1])
+    with col1:
+        st.text_input(
+            "",
+            placeholder="Type your message below (type 'exit' to logout):",
+            key="chat_input",
+            on_change=handle_input
+        )
+    with col2:
+        if st.button("📤", help="Send"):
+            handle_input()
+
+    # --- Logout Button ---
+    st.markdown("---")
+    if st.button("🔓 Logout"):
+        st.session_state.authenticated = False
+        st.session_state.customer_id = None
+        st.session_state.chat_history = []
+        st.session_state.logged_out = True
+        st.rerun()
