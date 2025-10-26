@@ -8,13 +8,13 @@ from agent.chat_agent import answer_tool_func
 # --- App Configuration ---
 st.set_page_config(page_title="FoodHub Chatbot", page_icon="🍽️", layout="centered")
 
-# --- Load Local JPG Background Image ---
+# --- Load Local PNG Background Image ---
 def get_base64_image(image_path):
     with open(image_path, "rb") as img_file:
         encoded = base64.b64encode(img_file.read()).decode()
-    return f"data:image/jpeg;base64,{encoded}"
+    return f"data:image/png;base64,{encoded}"
 
-image_base64 = get_base64_image("assets/background.jpg")  # Replace with your actual path
+image_base64 = get_base64_image("foodhub_background.png")  # Replace with your actual path
 
 # --- Background Image with Overlay ---
 st.markdown(
