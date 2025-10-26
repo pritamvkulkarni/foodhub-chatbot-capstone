@@ -7,6 +7,10 @@ from agent.chat_agent import answer_tool_func
 
 # --- App Configuration ---
 st.set_page_config(page_title="FoodHub Chatbot", page_icon="🍽️", layout="centered")
+st.markdown(
+    "<div style='font-size:16px; color:#333; margin-bottom:20px;'>Please provide your customer ID and password to continue.</div>",
+    unsafe_allow_html=True
+)
 
 # --- Load Local JPG Background Image ---
 def get_base64_image(image_path):
@@ -25,9 +29,17 @@ st.markdown(
         background-size: cover;
         background-repeat: no-repeat;
         background-attachment: fixed;
+    }}
+    .right-align-container {{
         display: flex;
         justify-content: flex-end;
-        padding-right: 50px;
+        padding-right: 80px;
+    }}
+    .login-box {{
+        background-color: rgba(255, 255, 255, 0.85);
+        padding: 30px;
+        border-radius: 10px;
+        width: 400px;
     }}
     .main > div {{
         max-width: 600px;
@@ -71,9 +83,9 @@ if st.session_state.get("farewell_triggered", False):
 # --- Login Page ---
 if not st.session_state.authenticated:
     with st.form("login_form"):
-        customer_id = st.text_input("Customer ID", placeholder="eg: C1011")
+        customer_id = st.text_input("Customer ID", placeholder="eg: C1018")
         password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Sign In")
+        submitted = st.form_submit_button("Log In")
 
         if submitted:
             if is_valid_customer(customer_id) and password == "foodhub123":
