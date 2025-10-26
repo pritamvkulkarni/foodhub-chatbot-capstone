@@ -2,8 +2,8 @@ import streamlit as st
 import base64
 import time
 from scripts.validate_customer import is_valid_customer
-from deployment.agents.sql_agent import order_query_tool_func
-from deployment.agents.chat_agent import answer_tool_func
+from agent.sql_agent import order_query_tool_func
+from agent.chat_agent import answer_tool_func
 
 # --- App Configuration ---
 st.set_page_config(page_title="FoodHub Chatbot", page_icon="🍽️", layout="centered")
@@ -82,28 +82,31 @@ if not st.session_state.authenticated:
 if st.session_state.authenticated:
     st.markdown(f"<h3 style='color:#ff4b4b;'>Hi {st.session_state.customer_id}, how can I help you today?</h3>", unsafe_allow_html=True)
 
-    # --- Display Chat History ---
-    for user_label, user_msg, bot_label, bot_msg in st.session_state.chat_history:
-        st.markdown(
-            f"""
-            <div style='text-align:right; padding:8px; margin-bottom:5px;'>
-                <div style='display:inline-block; background-color:#f0f0f0; color:#333; padding:10px 15px; border-radius:15px; max-width:70%;'>
-                    {user_msg}
-                </div>
+# --- Display Chat History ---
+for user_label, user_msg, bot_label, bot_msg in st.session_state.chat_history:
+    # User message (right-aligned with icon on the right)
+    st.markdown(
+        f"""
+        <div style='text-align:right; padding:8px; margin-bottom:5px;'>
+            <div style='display:inline-block; background-color:#f0f0f0; color:#333; padding:10px 15px; border-radius:15px; max-width:70%;'>
+                {user_msg} <span style='font-size:18px;'>🙋</span>
             </div>
-            """,
-            unsafe_allow_html=True
-        )
-        st.markdown(
-            f"""
-            <div style='text-align:left; padding:8px; margin-bottom:15px;'>
-                <div style='display:inline-block; background-color:#ff4b4b; color:#fff; padding:10px 15px; border-radius:15px; max-width:70%;'>
-                    {bot_msg}
-                </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Bot message (left-aligned with icon on the left)
+    st.markdown(
+        f"""
+        <div style='text-align:left; padding:8px; margin-bottom:15px;'>
+            <div style='display:inline-block; background-color:#ff4b4b; color:#fff; padding:10px 15px; border-radius:15px; max-width:70%;'>
+                <span style='font-size:18px;'>🤖</span> {bot_msg}
             </div>
-            """,
-            unsafe_allow_html=True
-        )
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
     # --- Clear input if flagged ---
     if st.session_state.clear_input:
