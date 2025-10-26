@@ -53,6 +53,15 @@ with col1:
 with col2:
     st.markdown("<h1 style='color: #ff4b4b; padding-top: 10px;'>Welcome to FoodHub Chatbot</h1>", unsafe_allow_html=True)
 
+if st.session_state.get("farewell_triggered", False):
+    st.success("🙏 Thank you for chatting with FoodHub! Redirecting you to the login page…")
+    time.sleep(2.5)
+    st.session_state.authenticated = False
+    st.session_state.customer_id = None
+    st.session_state.chat_history = []
+    st.session_state.farewell_triggered = False
+    st.rerun()
+  
 # --- Login Page ---
 if not st.session_state.authenticated:
     with st.form("login_form"):
@@ -103,30 +112,28 @@ if st.session_state.authenticated:
 
     # --- Handle input on Enter ---
     def handle_input():
-        user_input = st.session_state.chat_input
-        exit_keywords = ["exit", "quit", "stop", "bye", "goodbye", "end"]
-        if any(keyword in user_input.lower() for keyword in exit_keywords):
-            st.session_state.authenticated = False
-            st.session_state.customer_id = None
-            st.session_state.chat_history = []
-            st.session_state.clear_input = True
-            st.rerun()
-        else:
-            raw = order_query_tool_func(st.session_state.customer_id, user_input)
-            final = answer_tool_func(raw)
-            st.session_state.chat_history.append(("You", user_input, "Bot", final))
-            st.session_state.clear_input = True
-            st.rerun()
+      user_input = st.session_state.chat_input
+      exit_keywords = ["exit", "quit", "stop", "bye", "goodbye", "end"]
+
+      if any(keyword in user_input.lower() for keyword in exit_keywords):
+          st.session_state.farewell_triggered = True
+          st.session_state.chat_input = ""
+      else:
+          raw = order_query_tool_func(st.session_state.customer_id, user_input)
+          final = answer_tool_func(raw)
+          st.session_state.chat_history.append(("You", user_input, "Bot", final))
+          st.session_state.clear_input = True
 
     # --- Chat Prompt at Bottom ---
-    col1, col2 = st.columns([5, 1])
+    col1, col2 = st.columns([6, 1])
     with col1:
         st.text_input(
             "",
-            placeholder="Type your message below (type 'exit' to logout):",
+            placeholder="Type your message here.",
             key="chat_input",
             on_change=handle_input
         )
     with col2:
+        st.markdown("<div style='padding-top: 22px;'></div>", unsafe_allow_html=True)  # Align button vertically
         if st.button("📤", help="Send"):
             handle_input()
