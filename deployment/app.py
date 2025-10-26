@@ -12,16 +12,16 @@ st.set_page_config(page_title="FoodHub Chatbot", page_icon="🍽️", layout="ce
 def get_base64_image(image_path):
     with open(image_path, "rb") as img_file:
         encoded = base64.b64encode(img_file.read()).decode()
-    return f"data:image/png;base64,{encoded}"
+    return encoded
 
 image_base64 = get_base64_image("foodhub_background.png")  # Replace with your actual path
 
-# --- Background Image with Overlay ---
+# --- Inject CSS for Background ---
 st.markdown(
     f"""
     <style>
-    body {{
-        background-image: url("{image_base64}");
+    .stApp {{
+        background-image: url("data:image/png;base64,{image_base64}");
         background-size: cover;
         background-repeat: no-repeat;
         background-attachment: fixed;

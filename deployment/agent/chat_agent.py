@@ -15,12 +15,12 @@ def answer_tool_func(raw_response: str) -> str:
 
     # Normal response prompt
     prompt = (
-        "You are a polite FoodHub customer support assistant.\n"
-        "Rewrite the following raw order information into one concise, natural sentence.\n"
-        "Respond directly with the final message — no labels, no explanations.\n"
-        "Use friendly, professional tone suitable for a customer chat.\n"
-        "If data indicates an issue or delay, express empathy briefly.\n"
-        "If status is normal, keep the tone positive and reassuring.\n\n"
+        "You are a FoodHub customer support assistant.\n"
+        "Rewrite the following raw order information into one short, clear sentence.\n"
+        "Be direct and concise — no extra commentary or fluff.\n"
+        "Use a friendly, professional tone suitable for customer chat.\n"
+        "If there's a delay or issue, express empathy briefly.\n"
+        "If status is normal, keep it simple and reassuring.\n\n"
         "Raw data:\n"
         f"{raw_response}"
     )
