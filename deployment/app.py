@@ -14,7 +14,7 @@ def get_base64_image(image_path):
         encoded = base64.b64encode(img_file.read()).decode()
     return f"data:image/jpeg;base64,{encoded}"
 
-image_base64 = get_base64_image("foodhub_background.jpg")  # Replace with your actual path
+image_base64 = get_base64_image("assets/background.jpg")  # Replace with your actual path
 
 # --- Background Image with Overlay ---
 st.markdown(
@@ -45,8 +45,6 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 if "clear_input" not in st.session_state:
     st.session_state.clear_input = False
-if "logged_out" not in st.session_state:
-    st.session_state.logged_out = False
 
 # --- Header: Logo + Title Side-by-Side ---
 col1, col2 = st.columns([1, 5])
@@ -54,13 +52,6 @@ with col1:
     st.image("foodhub_logo.png", width=80)
 with col2:
     st.markdown("<h1 style='color: #ff4b4b; padding-top: 10px;'>Welcome to FoodHub Chatbot</h1>", unsafe_allow_html=True)
-
-# --- Logout Message and Redirect ---
-if st.session_state.logged_out:
-    st.success("✅ You have been successfully logged out. Redirecting to login page…")
-    time.sleep(2.5)
-    st.session_state.logged_out = False
-    st.rerun()
 
 # --- Login Page ---
 if not st.session_state.authenticated:
@@ -82,38 +73,35 @@ if not st.session_state.authenticated:
 if st.session_state.authenticated:
     st.markdown(f"<h3 style='color:#ff4b4b;'>Hi {st.session_state.customer_id}, how can I help you today?</h3>", unsafe_allow_html=True)
 
-# --- Display Chat History ---
-for user_label, user_msg, bot_label, bot_msg in st.session_state.chat_history:
-    # User message (right-aligned with icon on the right)
-    st.markdown(
-        f"""
-        <div style='text-align:right; padding:8px; margin-bottom:5px;'>
-            <div style='display:inline-block; background-color:#f0f0f0; color:#333; padding:10px 15px; border-radius:15px; max-width:70%;'>
-                {user_msg} <span style='font-size:18px;'>🙋</span>
+    # --- Display Chat History ---
+    for user_label, user_msg, bot_label, bot_msg in st.session_state.chat_history:
+        st.markdown(
+            f"""
+            <div style='text-align:right; padding:8px; margin-bottom:5px;'>
+                <div style='display:inline-block; background-color:#f0f0f0; color:#333; padding:10px 15px; border-radius:15px; max-width:70%;'>
+                    {user_msg}
+                </div>
             </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    # Bot message (left-aligned with icon on the left)
-    st.markdown(
-        f"""
-        <div style='text-align:left; padding:8px; margin-bottom:15px;'>
-            <div style='display:inline-block; background-color:#ff4b4b; color:#fff; padding:10px 15px; border-radius:15px; max-width:70%;'>
-                <span style='font-size:18px;'>🤖</span> {bot_msg}
+            """,
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            f"""
+            <div style='text-align:left; padding:8px; margin-bottom:15px;'>
+                <div style='display:inline-block; background-color:#ff4b4b; color:#fff; padding:10px 15px; border-radius:15px; max-width:70%;'>
+                    {bot_msg}
+                </div>
             </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+            """,
+            unsafe_allow_html=True
+        )
 
     # --- Clear input if flagged ---
     if st.session_state.clear_input:
         st.session_state.chat_input = ""
         st.session_state.clear_input = False
 
-    # --- Handle input ---
+    # --- Handle input on Enter ---
     def handle_input():
         user_input = st.session_state.chat_input
         exit_keywords = ["exit", "quit", "stop", "bye", "goodbye", "end"]
@@ -122,7 +110,6 @@ for user_label, user_msg, bot_label, bot_msg in st.session_state.chat_history:
             st.session_state.customer_id = None
             st.session_state.chat_history = []
             st.session_state.clear_input = True
-            st.session_state.logged_out = True
             st.rerun()
         else:
             raw = order_query_tool_func(st.session_state.customer_id, user_input)
@@ -132,24 +119,14 @@ for user_label, user_msg, bot_label, bot_msg in st.session_state.chat_history:
             st.rerun()
 
     # --- Chat Prompt at Bottom ---
-    st.markdown("---")
     col1, col2 = st.columns([5, 1])
     with col1:
         st.text_input(
             "",
-            placeholder="Type your message here",
+            placeholder="Type your message below (type 'exit' to logout):",
             key="chat_input",
             on_change=handle_input
         )
     with col2:
         if st.button("📤", help="Send"):
             handle_input()
-
-    # --- Logout Button ---
-    st.markdown("---")
-    if st.button("🔓 Logout"):
-        st.session_state.authenticated = False
-        st.session_state.customer_id = None
-        st.session_state.chat_history = []
-        st.session_state.logged_out = True
-        st.rerun()
