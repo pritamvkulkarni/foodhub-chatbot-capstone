@@ -79,7 +79,7 @@ if st.session_state.get("farewell_triggered", False):
 # --- Login Page ---
 if not st.session_state.authenticated:
     with st.form("login_form"):
-    
+
         customer_id = st.text_input("Customer ID", placeholder="eg: C1018")
         password = st.text_input("Password", type="password")
         submitted = st.form_submit_button("Log In")
