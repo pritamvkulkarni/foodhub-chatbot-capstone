@@ -40,13 +40,12 @@ if "clear_input" not in st.session_state:
     
 
 # Login form
-col1, col2 = st.columns([1, 3]) # Adjust ratios for desired spacing
+col1, col2, col3 = st.columns([1, 3]) # Adjust ratios for desired spacing
 
-with col2:
-    
+with col3:
     col1, col2 = st.columns([1, 2])
     with col1:
-        st.image("foodhub_logo.png", width=800)
+        st.image("foodhub_logo.png", width=500)
     with col2:
         st.markdown("<h1 style='color: #ff4b4b; padding-top: 10px;'>Welcome to FoodHub Chatbot</h1>", unsafe_allow_html=True)
     with st.form("login_form"):
@@ -63,3 +62,31 @@ with col2:
                 st.rerun()
             else:
                 st.error("Invalid credentials. Please try again.")
+                
+# --- Chatbot Interface ---
+if st.session_state.authenticated:
+    customer_id = st.session_state.get("customer_id")
+    st.title("FoodHub Chatbot")
+    st.subheader(f"Welcome {customer_id} to FoodHub Chatbot")
+
+    # Ensure chat history
+    if "history" not in st.session_state:
+        st.session_state["history"] = [
+            {"role": "assistant", "content": f"Hi {customer_name or 'there'}! How can I help you today?"}
+        ]
+
+    # Render history
+    for msg in st.session_state["history"]:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+    # Chat input
+    with st.form("chat_form", clear_on_submit=True):
+        query = st.text_area("Ask your question:", placeholder="e.g., Track my last order", height=120)
+        send = st.form_submit_button("Submit")
+
+    if send:
+        if not query.strip():
+            st.warning("Please enter a query before submitting.")
+            return
+    
