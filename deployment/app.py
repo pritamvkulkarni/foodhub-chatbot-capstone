@@ -40,26 +40,32 @@ if "clear_input" not in st.session_state:
     
 
 # Login form
-col1, col2 = st.columns([2, 1]) # Adjust ratios for desired spacing
+col_left, col_right = st.columns([2, 1])
 
-with col2:
+with col_right:
+    # Container for logo and welcome message
+    logo_col, text_col = st.columns([1, 5])
     
-    col1, col2 = st.columns([1, 5])
-    with col1:
-        st.image("foodhub_logo.png", width=100)
-    with col2:
-        st.markdown("<h1 style='color: #ff4b4b; padding-top: 10px;'>Welcome to FoodHub Chatbot</h1>", unsafe_allow_html=True)
+    with logo_col:
+        st.image("foodhub_logo.png", width=60)  # Slightly smaller for better vertical alignment
+    
+    with text_col:
+        st.markdown("""
+            <h2 style='color: #ff4b4b; padding-top: 10px; margin-bottom: 0;'>Welcome to</h2>
+            <h1 style='color: #ff4b4b; margin-top: 0;'>FoodHub Chatbot</h1>
+        """, unsafe_allow_html=True)
+
+    # Login form below the header
     with st.form("login_form"):
         customer_id = st.text_input("Customer ID", placeholder="eg: C1018")
         password = st.text_input("Password", type="password")
         submitted = st.form_submit_button("Login")
 
         if submitted:
-            # Add your login logic here
             if is_valid_customer(customer_id) and password == "foodhub123":
                 st.session_state.authenticated = True
                 st.session_state.customer_id = customer_id
                 st.session_state.chat_history = []
                 st.rerun()
             else:
-                st.error("Invalid credentials. Please try again.")
+                st.error("❌ Invalid credentials. Please try again.")
