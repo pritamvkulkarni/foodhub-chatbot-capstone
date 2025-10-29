@@ -89,17 +89,17 @@ if st.session_state.authenticated:
         ]
     with col2:
         st.subheader(f"Welcome {customer_id} to FoodHub Chatbot")
-        with st.form("chat_form"):
-            # Chat input
-            for m in st.session_state.history:
-                with st.chat_message("user" if m["role"]=="user" else "assistant"):
-                    bubble = "chat-bubble-user" if m["role"]=="user" else "chat-bubble-bot"
-                    st.markdown(f"<div class='{bubble}'>{m['content']}</div>", unsafe_allow_html=True)
+        # Chat input
+        for m in st.session_state.history:
+            with st.chat_message("user" if m["role"]=="user" else "assistant"):
+                bubble = "chat-bubble-user" if m["role"]=="user" else "chat-bubble-bot"
+                st.markdown(f"<div class='{bubble}'>{m['content']}</div>", unsafe_allow_html=True)
 
-            # 2) input → append → bot → append → rerun
-            prompt = st.chat_input("Ask about your order, offers, or menu…")
-            if prompt:
-                st.session_state.history.append({"role":"user","content":prompt})
-                reply = "hello"                    # swap with real LLM/Agent call
-                st.session_state.history.append({"role":"assistant","content":reply})
-                st.rerun()
+        # 2) input → append → bot → append → rerun
+        prompt = st.chat_input("Ask about your order, offers, or menu…")
+        if prompt:
+            st.session_state.history.append({"role":"user","content":prompt})
+            reply = "hello"                    # swap with real LLM/Agent call
+            st.session_state.history.append({"role":"assistant","content":reply})
+            st.rerun()
+  
