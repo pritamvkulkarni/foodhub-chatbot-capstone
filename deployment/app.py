@@ -88,5 +88,4 @@ if st.session_state.authenticated:
     if send:
         if not query.strip():
             st.warning("Please enter a query before submitting.")
-            return
     
