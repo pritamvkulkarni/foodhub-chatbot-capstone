@@ -44,7 +44,11 @@ col1, col2 = st.columns([2, 1]) # Adjust ratios for desired spacing
 
 with col2:
     
-    st.title("Welcome to FoodHub Chatbot")
+    col1, col2 = st.columns([1, 5])
+    with col1:
+        st.image("foodhub_logo.png", width=100)
+    with col2:
+        st.markdown("<h1 style='color: #ff4b4b; padding-top: 10px;'>Welcome to FoodHub Chatbot</h1>", unsafe_allow_html=True)
     with st.form("login_form"):
         customer_id = st.text_input("Customer ID", placeholder="eg: C1018")
         password = st.text_input("Password", type="password")
