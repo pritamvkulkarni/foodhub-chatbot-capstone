@@ -1,4 +1,5 @@
 import streamlit as st
+import base64
 from scripts.validate_customer import is_valid_customer
 
 # --- App Configuration ---
@@ -38,6 +39,9 @@ with col2:
         if submitted:
             # Add your login logic here
             if is_valid_customer(customer_id) and password == "foodhub123":
-                st.success("Logged in successfully!")
+                st.session_state.authenticated = True
+                st.session_state.customer_id = customer_id
+                st.session_state.chat_history = []
+                st.rerun()
             else:
                 st.error("Invalid credentials. Please try again.")
