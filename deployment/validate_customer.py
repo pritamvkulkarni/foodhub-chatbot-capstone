@@ -5,7 +5,7 @@ import sqlite3  # or use psycopg2, mysql.connector, etc. depending on your DB
 # --- Simple validator ---
 def extract_cust_id(text: str):
     """Return cust_id in format C#### or None"""
-    m = re.search(r"\b(C\d{4})\b", text, flags=re.I)
+    m = re.search(r"\bC\d{4}\b", text, flags=re.I)
     return m.group(1).upper() if m else None
 
 # --- Validate customer ID using direct SQL ---
