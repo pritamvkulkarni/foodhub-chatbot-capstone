@@ -3,7 +3,7 @@ import base64
 from validate_customer import is_valid_customer
 
 # --- App Configuration ---
-st.set_page_config(page_title="FoodHub Chatbot", page_icon="🍽️", layout="centered")
+st.set_page_config(page_title="FoodHub Chatbot", page_icon="🍽️", layout="wide")
 
 # --- Load Local JPG Background Image ---
 def get_base64_image(image_path):
@@ -13,19 +13,33 @@ def get_base64_image(image_path):
 
 image_base64 = get_base64_image("foodhub_background_jpg.jpg")  # Make sure this file exists
 
-# --- Inject CSS for Background ---
-st.markdown(
-    f"""
-    <style>
-    .stApp {{
-        background-image: url("data:image/jpeg;base64,{image_base64}");
-        background-size: cover;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-    }}
-   """,
-   unsafe_allow_html=True
-)
+if not st.session_state.authenticated:
+    # --- Inject CSS for Background ---
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url("data:image/jpeg;base64,{image_base64}");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }}
+       """,
+       unsafe_allow_html=True
+    )
+else:
+    # Clear background after login
+    st.markdown(
+        """
+        <style>
+        .stApp {
+            background-image: none !important;
+            background-color: #ffffff !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 
 # --- Session State Initialization ---
