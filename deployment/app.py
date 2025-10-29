@@ -59,10 +59,10 @@ with col2:
                 st.session_state.authenticated = True
                 st.session_state.customer_id = customer_id
                 st.session_state.chat_history = []
-                st.rerun()
-            else:
-                st.error("Invalid credentials. Please try again.")
-                st.rerun()
+           #     st.rerun()
+           # else:
+           #     st.error("Invalid credentials. Please try again.")
+           #     st.rerun()
                 
 # --- Chatbot Interface ---
 if st.session_state.authenticated:
@@ -76,18 +76,17 @@ if st.session_state.authenticated:
             {"role": "assistant", "content": f"Hi {customer_id or 'there'}! How can I help you today?"}
         ]
 
-    # Render history
-    for msg in st.session_state["history"]:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
 
     # Chat input
-    with st.form("chat_form", clear_on_submit=True):
-        query = st.text_area("Ask your question:", placeholder="e.g., Track my last order", height=120)
-        send = st.form_submit_button("Submit")
+    for m in st.session_state.history:
+        with st.chat_message("user" if m["role"]=="user" else "assistant"):
+            bubble = "chat-bubble-user" if m["role"]=="user" else "chat-bubble-bot"
+            st.markdown(f"<div class='{bubble}'>{m['content']}</div>", unsafe_allow_html=True)
 
-    if send:
-        if not query.strip():
-            st.warning("Please enter a query before submitting.")
-          
-    
+    # 2) input → append → bot → append → rerun
+    prompt = st.chat_input("Ask about your order, offers, or menu…")
+    if prompt:
+        st.session_state.history.append({"role":"user","content":prompt})
+        reply = "hello"                    # swap with real LLM/Agent call
+        st.session_state.history.append({"role":"assistant","content":reply})
+        st.rerun()
