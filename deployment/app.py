@@ -1,5 +1,5 @@
 import streamlit as st
-import base64
+from scripts.validate_customer import is_valid_customer
 
 # --- App Configuration ---
 st.set_page_config(page_title="FoodHub Chatbot", page_icon="🍽️", layout="centered")
@@ -31,13 +31,13 @@ col1, col2 = st.columns([2, 1]) # Adjust ratios for desired spacing
 with col2:
     st.title("Login")
     with st.form("login_form"):
-        username = st.text_input("Username")
+        customer_id = st.text_input("Customer ID", placeholder="eg: C1018")
         password = st.text_input("Password", type="password")
-        submit_button = st.form_submit_button("Login")
+        submitted = st.form_submit_button("Login")
 
-        if submit_button:
+        if submitted:
             # Add your login logic here
-            if username == "user" and password == "pass":
+            if is_valid_customer(customer_id) and password == "foodhub123":
                 st.success("Logged in successfully!")
             else:
-                st.error("Invalid credentials.")
+                st.error("Invalid credentials. Please try again.")
