@@ -27,10 +27,24 @@ st.markdown(
    unsafe_allow_html=True
 )
 
+
+# --- Session State Initialization ---
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "customer_id" not in st.session_state:
+    st.session_state.customer_id = None
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+if "clear_input" not in st.session_state:
+    st.session_state.clear_input = False
+    
+
+# Login form
 col1, col2 = st.columns([2, 1]) # Adjust ratios for desired spacing
 
 with col2:
-    st.title("Login")
+    
+    st.title("Welcome to FoodHub Chatbot")
     with st.form("login_form"):
         customer_id = st.text_input("Customer ID", placeholder="eg: C1018")
         password = st.text_input("Password", type="password")
