@@ -78,6 +78,7 @@ if st.session_state.get("farewell_triggered", False):
 
 # --- Login Page ---
 if not st.session_state.authenticated:
+    st.markdown('<div class="right-align-container"><div class="login-box">', unsafe_allow_html=True)
     with st.form("login_form"):
 
         customer_id = st.text_input("Customer ID", placeholder="eg: C1018")
