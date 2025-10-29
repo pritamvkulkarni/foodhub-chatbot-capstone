@@ -43,7 +43,7 @@ if "clear_input" not in st.session_state:
 col1, col2 = st.columns([2, 2]) # Adjust ratios for desired spacing
 
 with col2:
-    col1, col2 = st.columns([1, 2])
+    col1, col2 = st.columns([1, 4])
     with col1:
         st.image("foodhub_logo.png", width=500)
     with col2:
@@ -55,11 +55,11 @@ with col2:
 
         if submitted:
             # Add your login logic here
-            if is_valid_customer(customer_id) and password == "foodhub123":
-                st.session_state.authenticated = True
-                st.session_state.customer_id = customer_id
-                st.session_state.chat_history = []
-           #     st.rerun()
+            #if is_valid_customer(customer_id) and password == "foodhub123":
+            st.session_state.authenticated = True
+            st.session_state.customer_id = customer_id
+            st.session_state.chat_history = []
+            st.rerun()
            # else:
            #     st.error("Invalid credentials. Please try again.")
            #     st.rerun()
