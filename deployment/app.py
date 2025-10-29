@@ -40,13 +40,13 @@ if "clear_input" not in st.session_state:
     
 
 # Login form
-col1, col2 = st.columns([1, 2]) # Adjust ratios for desired spacing
+col1, col2 = st.columns([1, 3]) # Adjust ratios for desired spacing
 
 with col2:
     
     col1, col2 = st.columns([1, 2])
     with col1:
-        st.image("foodhub_logo.png", width=1000)
+        st.image("foodhub_logo.png", width=800)
     with col2:
         st.markdown("<h1 style='color: #ff4b4b; padding-top: 10px;'>Welcome to FoodHub Chatbot</h1>", unsafe_allow_html=True)
     with st.form("login_form"):
