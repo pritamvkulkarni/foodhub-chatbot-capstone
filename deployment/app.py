@@ -62,6 +62,7 @@ with col2:
                 st.rerun()
             else:
                 st.error("Invalid credentials. Please try again.")
+                st.rerun()
                 
 # --- Chatbot Interface ---
 if st.session_state.authenticated:
