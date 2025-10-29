@@ -81,26 +81,25 @@ if not st.session_state.authenticated:
 # --- Chatbot Interface ---
 if st.session_state.authenticated:
     customer_id = st.session_state.get("customer_id")
-    st.title("FoodHub Chatbot")
-    st.subheader(f"Welcome {customer_id} to FoodHub Chatbot")
-
+    col1, col2 = st.columns([1, 3])
     # Ensure chat history
     if "history" not in st.session_state:
         st.session_state["history"] = [
             {"role": "assistant", "content": f"Hi {customer_id or 'there'}! How can I help you today?"}
         ]
+    with col2:
+        st.subheader(f"Welcome {customer_id} to FoodHub Chatbot")
+        with st.form("chat_form"):
+            # Chat input
+            for m in st.session_state.history:
+                with st.chat_message("user" if m["role"]=="user" else "assistant"):
+                    bubble = "chat-bubble-user" if m["role"]=="user" else "chat-bubble-bot"
+                    st.markdown(f"<div class='{bubble}'>{m['content']}</div>", unsafe_allow_html=True)
 
-
-    # Chat input
-    for m in st.session_state.history:
-        with st.chat_message("user" if m["role"]=="user" else "assistant"):
-            bubble = "chat-bubble-user" if m["role"]=="user" else "chat-bubble-bot"
-            st.markdown(f"<div class='{bubble}'>{m['content']}</div>", unsafe_allow_html=True)
-
-    # 2) input → append → bot → append → rerun
-    prompt = st.chat_input("Ask about your order, offers, or menu…")
-    if prompt:
-        st.session_state.history.append({"role":"user","content":prompt})
-        reply = "hello"                    # swap with real LLM/Agent call
-        st.session_state.history.append({"role":"assistant","content":reply})
-        st.rerun()
+            # 2) input → append → bot → append → rerun
+            prompt = st.chat_input("Ask about your order, offers, or menu…")
+            if prompt:
+                st.session_state.history.append({"role":"user","content":prompt})
+                reply = "hello"                    # swap with real LLM/Agent call
+                st.session_state.history.append({"role":"assistant","content":reply})
+                st.rerun()
