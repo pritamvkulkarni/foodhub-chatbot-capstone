@@ -93,6 +93,7 @@ if not st.session_state.authenticated:
                 st.rerun()
             else:
                 st.error("❌ Invalid credentials. Please try again.")
+    st.markdown('</div></div>', unsafe_allow_html=True)
 
 # --- Chatbot Interface ---
 if st.session_state.authenticated:

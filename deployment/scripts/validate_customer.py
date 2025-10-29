@@ -1,21 +1,31 @@
 
 import re
-from agent.sql_agent import db_agent_executor
+import sqlite3  # or use psycopg2, mysql.connector, etc. depending on your DB
 
-# simple validators
+# --- Simple validator ---
 def extract_cust_id(text: str):
     """Return cust_id in format C#### or None"""
     m = re.search(r"\b(C\d{4})\b", text, flags=re.I)
     return m.group(1).upper() if m else None
 
-# Validate customer ID using the SQL Agent
+# --- Validate customer ID using direct SQL ---
 def is_valid_customer(customer_id: str) -> bool:
-    if not extract_cust_id(customer_id):
+    cust_id = extract_cust_id(customer_id)
+    if not cust_id:
         return False
+
     try:
-        query = f"Check if customer ID {customer_id} exists in the database"
-        response = db_agent_executor.run(query)
-        return "does not exist" not in response.lower()
+        # Connect to your database
+        conn = sqlite3.connect("customer_orders.db")  # Replace with your actual DB connection
+        cursor = conn.cursor()
+
+        # Run a simple query to check existence
+        cursor.execute("SELECT 1 FROM customers WHERE customer_id = ?", (cust_id,))
+        result = cursor.fetchone()
+
+        conn.close()
+        return result is not None
+
     except Exception as e:
-        print(f"Agent error: {e}")
+        print(f"Database error: {e}")
         return False
