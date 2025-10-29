@@ -40,9 +40,9 @@ if "clear_input" not in st.session_state:
     
 
 # Login form
-col1, col2, col3 = st.columns([1, 3]) # Adjust ratios for desired spacing
+col1, col2 = st.columns([2, 2]) # Adjust ratios for desired spacing
 
-with col3:
+with col2:
     col1, col2 = st.columns([1, 2])
     with col1:
         st.image("foodhub_logo.png", width=500)
@@ -72,7 +72,7 @@ if st.session_state.authenticated:
     # Ensure chat history
     if "history" not in st.session_state:
         st.session_state["history"] = [
-            {"role": "assistant", "content": f"Hi {customer_name or 'there'}! How can I help you today?"}
+            {"role": "assistant", "content": f"Hi {customer_id or 'there'}! How can I help you today?"}
         ]
 
     # Render history
@@ -88,4 +88,5 @@ if st.session_state.authenticated:
     if send:
         if not query.strip():
             st.warning("Please enter a query before submitting.")
+          
     
