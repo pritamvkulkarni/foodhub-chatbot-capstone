@@ -13,6 +13,16 @@ def get_base64_image(image_path):
 
 image_base64 = get_base64_image("foodhub_background_jpg.jpg")  # Make sure this file exists
 
+# --- Session State Initialization ---
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "customer_id" not in st.session_state:
+    st.session_state.customer_id = None
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+if "clear_input" not in st.session_state:
+    st.session_state.clear_input = False
+
 if not st.session_state.authenticated:
     # --- Inject CSS for Background ---
     st.markdown(
@@ -40,17 +50,6 @@ else:
         """,
         unsafe_allow_html=True
     )
-
-
-# --- Session State Initialization ---
-if "authenticated" not in st.session_state:
-    st.session_state.authenticated = False
-if "customer_id" not in st.session_state:
-    st.session_state.customer_id = None
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-if "clear_input" not in st.session_state:
-    st.session_state.clear_input = False
     
 
 # Login form
