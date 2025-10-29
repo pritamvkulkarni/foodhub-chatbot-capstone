@@ -23,59 +23,60 @@ if "chat_history" not in st.session_state:
 if "clear_input" not in st.session_state:
     st.session_state.clear_input = False
 
-if not st.session_state.authenticated:
+#if not st.session_state.authenticated:
     # --- Inject CSS for Background ---
-    st.markdown(
-        f"""
-        <style>
-        .stApp {{
-            background-image: url("data:image/jpeg;base64,{image_base64}");
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-        }}
-       """,
-       unsafe_allow_html=True
-    )
-else:
+st.markdown(
+    f"""
+    <style>
+    .stApp {{
+        background-image: url("data:image/jpeg;base64,{image_base64}");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }}
+   """,
+   unsafe_allow_html=True
+)
+#else:
     # Clear background after login
-    st.markdown(
-        """
-        <style>
-        .stApp {
-            background-image: none !important;
-            background-color: #ffffff !important;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+#    st.markdown(
+#        """
+#        <style>
+#        .stApp {
+#            background-image: none !important;
+#            background-color: #ffffff !important;
+#        }
+#        </style>
+#        """,
+#        unsafe_allow_html=True
+#    )
     
 
-# Login form
-col1, col2 = st.columns([2, 2]) # Adjust ratios for desired spacing
+if not st.session_state.authenticated:
+    # Login form
+    col1, col2 = st.columns([2, 2]) # Adjust ratios for desired spacing
 
-with col2:
-    col1, col2 = st.columns([1, 4])
-    with col1:
-        st.image("foodhub_logo.png", width=500)
     with col2:
-        st.markdown("<h1 style='color: #ff4b4b; padding-top: 10px;'>Welcome to FoodHub Chatbot</h1>", unsafe_allow_html=True)
-    with st.form("login_form"):
-        customer_id = st.text_input("Customer ID", placeholder="eg: C1018")
-        password = st.text_input("Password", type="password")
-        submitted = st.form_submit_button("Login")
+        col1, col2 = st.columns([1, 4])
+        with col1:
+            st.image("foodhub_logo.png", width=500)
+        with col2:
+            st.markdown("<h1 style='color: #ff4b4b; padding-top: 10px;'>Welcome to FoodHub Chatbot</h1>", unsafe_allow_html=True)
+        with st.form("login_form"):
+            customer_id = st.text_input("Customer ID", placeholder="eg: C1018")
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Login")
 
-        if submitted:
-            # Add your login logic here
-            #if is_valid_customer(customer_id) and password == "foodhub123":
-            st.session_state.authenticated = True
-            st.session_state.customer_id = customer_id
-            st.session_state.chat_history = []
-            st.rerun()
-           # else:
-           #     st.error("Invalid credentials. Please try again.")
-           #     st.rerun()
+            if submitted:
+                # Add your login logic here
+                #if is_valid_customer(customer_id) and password == "foodhub123":
+                st.session_state.authenticated = True
+                st.session_state.customer_id = customer_id
+                st.session_state.chat_history = []
+                st.rerun()
+               # else:
+               #     st.error("Invalid credentials. Please try again.")
+               #     st.rerun()
                 
 # --- Chatbot Interface ---
 if st.session_state.authenticated:
