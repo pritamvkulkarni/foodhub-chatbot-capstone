@@ -26,24 +26,18 @@ st.markdown(
         background-repeat: no-repeat;
         background-attachment: fixed;
     }}
-    .right-align-container {{
+    .login-wrapper {{
         display: flex;
         justify-content: flex-end;
         padding-right: 80px;
+        margin-top: 50px;
     }}
     .login-box {{
         background-color: rgba(255, 255, 255, 0.85);
         padding: 30px;
         border-radius: 10px;
         width: 400px;
-    }}
-    .main > div {{
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: 0;
-        background-color: rgba(255, 255, 255, 0.85);
-        padding: 20px;
-        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }}
     </style>
     """,
@@ -78,7 +72,10 @@ if st.session_state.get("farewell_triggered", False):
 
 # --- Login Page ---
 if not st.session_state.authenticated:
-    st.markdown('<div class="right-align-container"><div class="login-box">', unsafe_allow_html=True)
+    # Create a placeholder to inject the form into HTML
+    login_placeholder = st.empty()
+    # Inject HTML wrapper
+    login_placeholder.markdown('<div class="login-wrapper"><div class="login-box">', unsafe_allow_html=True)
     with st.form("login_form"):
 
         customer_id = st.text_input("Customer ID", placeholder="eg: C1018")
@@ -93,7 +90,7 @@ if not st.session_state.authenticated:
                 st.rerun()
             else:
                 st.error("❌ Invalid credentials. Please try again.")
-    st.markdown('</div></div>', unsafe_allow_html=True)
+    login_placeholder.markdown('</div></div>', unsafe_allow_html=True)
 
 # --- Chatbot Interface ---
 if st.session_state.authenticated:
