@@ -1,4 +1,5 @@
 
+
 import streamlit as st
 import base64
 from validate_customer import is_valid_customer
@@ -90,11 +91,11 @@ if st.session_state.authenticated:
     with chat_col:
         col1, col2, col3 = st.columns([1, 3, 1])
         with col1:
-            st.image("foodhub_logo.png", width=80)
+            st.image("foodhub_logo.png", width=100)
         with col2:
             st.markdown(
                 f"""
-                <div style='display: flex; align-items: center; height: 100%;'>
+                <div style='display: flex; align-items: center; justify-content: flex-start; height: 100%;'>
                     <h1 style='color: #ff4b4b; margin: 0;'>Hey {customer_id}, Welcome!</h1>
                 </div>
                 """,
@@ -115,7 +116,8 @@ if st.session_state.authenticated:
         st.markdown("""
         <style>
         .chat-bubble-user {
-            background-color: #e0f7fa;
+            background-color: #dfe6e9;  /* soft gray-blue, neutral on light/dark */
+            color: #000000;             /* black text */
             padding: 10px 14px;
             border-radius: 12px;
             margin-bottom: 6px;
@@ -125,7 +127,8 @@ if st.session_state.authenticated:
         }
 
         .chat-bubble-bot {
-            background-color: #fce4ec;
+            background-color: #f1f0f0;  /* light gray, works on both themes */
+            color: #000000;             /* black text */
             padding: 10px 14px;
             border-radius: 12px;
             margin-bottom: 6px;
@@ -173,4 +176,3 @@ if st.session_state.authenticated:
             st.rerun()
         
     
-  
