@@ -1,3 +1,4 @@
+
 import streamlit as st
 import base64
 from validate_customer import is_valid_customer
@@ -18,10 +19,10 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "customer_id" not in st.session_state:
     st.session_state.customer_id = None
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
 if "clear_input" not in st.session_state:
     st.session_state.clear_input = False
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
 if not st.session_state.authenticated:
     # --- Inject CSS for Background ---
@@ -71,7 +72,6 @@ if not st.session_state.authenticated:
                 #if is_valid_customer(customer_id) and password == "foodhub123":
                 st.session_state.authenticated = True
                 st.session_state.customer_id = customer_id
-                st.session_state.chat_history = []
                 st.rerun()
                # else:
                #     st.error("Invalid credentials. Please try again.")
@@ -81,22 +81,96 @@ if not st.session_state.authenticated:
 if st.session_state.authenticated:
     customer_id = st.session_state.get("customer_id")
     # Ensure chat history
-    if "history" not in st.session_state:
-        st.session_state["history"] = [
-            {"role": "assistant", "content": f"Hi {customer_id or 'there'}! How can I help you today?"}
+    if not st.session_state.chat_history:
+        st.session_state["chat_history"] = [
+            {"role": "assistant", "content": f"Hi! How can I help you today?"}
         ]
-    st.subheader(f"Welcome {customer_id} to FoodHub Chatbot")
-    # Chat input
-    for m in st.session_state.history:
-        with st.chat_message("user" if m["role"]=="user" else "assistant"):
-            bubble = "chat-bubble-user" if m["role"]=="user" else "chat-bubble-bot"
-            st.markdown(f"<div class='{bubble}'>{m['content']}</div>", unsafe_allow_html=True)
+    spacer_left, chat_col, spacer_right = st.columns([1, 4, 1])
+    
+    with chat_col:
+        col1, col2, col3 = st.columns([1, 3, 1])
+        with col1:
+            st.image("foodhub_logo.png", width=80)
+        with col2:
+            st.markdown(
+                f"""
+                <div style='display: flex; align-items: center; height: 100%;'>
+                    <h1 style='color: #ff4b4b; margin: 0;'>Hey {customer_id}, Welcome!</h1>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        with col3:
+            st.markdown("<div style='text-align: right; padding-top: 10px;'>", unsafe_allow_html=True)
+            if st.button("Logout"):
+                st.session_state.authenticated = False
+                st.session_state.customer_id = None
+                st.session_state.chat_history = []
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+                
+        st.markdown("---")
+        
+        # Inject custom CSS for chat bubbles
+        st.markdown("""
+        <style>
+        .chat-bubble-user {
+            background-color: #e0f7fa;
+            padding: 10px 14px;
+            border-radius: 12px;
+            margin-bottom: 6px;
+            display: inline-block;
+            max-width: 80%;
+            text-align: right;
+        }
 
-    # 2) input → append → bot → append → rerun
-    prompt = st.chat_input("Ask about your order, offers, or menu…")
-    if prompt:
-        st.session_state.history.append({"role":"user","content":prompt})
-        reply = "hello"                    # swap with real LLM/Agent call
-        st.session_state.history.append({"role":"assistant","content":reply})
-        st.rerun()
+        .chat-bubble-bot {
+            background-color: #fce4ec;
+            padding: 10px 14px;
+            border-radius: 12px;
+            margin-bottom: 6px;
+            display: inline-block;
+            max-width: 80%;
+            text-align: left;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        # Chat rendering
+        for m in st.session_state.chat_history:
+            left_col, right_col = st.columns([1, 1])
+
+            if m["role"] == "user":
+                with right_col:
+                    st.markdown(
+                        f"""
+                        <div style='display: flex; justify-content: flex-end; align-items: center; margin-bottom: 8px;'>
+                            <div class='chat-bubble-user'>{m['content']}</div>
+                            <div style='font-size: 20px; margin-left: 8px;'>🙋</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+            else:
+                with left_col:
+                    st.markdown(
+                        f"""
+                        <div style='display: flex; justify-content: flex-start; align-items: center; margin-bottom: 8px;'>
+                            <div style='font-size: 20px; margin-right: 8px;'>🤖</div>
+                            <div class='chat-bubble-bot'>{m['content']}</div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+        # 2) input → append → bot → append → rerun
+        prompt = st.chat_input("Ask about your order, offers, or menu…")
+        if prompt:
+            st.session_state.chat_history.append({"role":"user","content":prompt})
+            reply = "hello"                    # swap with real LLM/Agent call
+            st.session_state.chat_history.append({"role":"assistant","content":reply})
+            st.rerun()
+        
+    
   
