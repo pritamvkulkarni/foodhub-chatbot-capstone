@@ -1,4 +1,5 @@
 
+
 import streamlit as st
 import base64
 from validate_customer import is_valid_customer
@@ -35,19 +36,35 @@ if not st.session_state.authenticated:
             background-repeat: no-repeat;
             background-attachment: fixed;
         }}
+        </style>
        """,
        unsafe_allow_html=True
     )
 else:
     # Clear background after login
-    st.markdown(
-        """
+    st.markdown(f"""
         <style>
-        .stApp {
+        /* Remove background from stApp so blurred layer shows through */
+        .stApp {{
             background-image: none !important;
-        }
+            background-color: transparent !important;
+        }}
+        .blurred-bg {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url("data:image/jpeg;base64,{image_base64}");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            z-index: -1;
+            filter: blur(6px);
+        }}
         </style>
-        """,
+        <div class="blurred-bg"></div>
+        """, 
         unsafe_allow_html=True
     )
     
@@ -75,7 +92,6 @@ if not st.session_state.authenticated:
                     st.rerun()
                 else:
                     st.error("Invalid credentials. Please try again.")
-                    st.rerun()
                 
 # --- Chatbot Interface ---
 if st.session_state.authenticated:
@@ -172,5 +188,4 @@ if st.session_state.authenticated:
             st.session_state.chat_history.append({"role":"user","content":prompt})
             reply = "hello"                    # swap with real LLM/Agent call
             st.session_state.chat_history.append({"role":"assistant","content":reply})
-            st.rerun()    
-    
+            st.rerun()
