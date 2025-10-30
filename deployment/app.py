@@ -3,6 +3,8 @@
 import streamlit as st
 import base64
 from validate_customer import is_valid_customer
+from agent.chat_agent import answer_tool_func
+from agent.sql_agent import order_query_tool_func
 
 # --- App Configuration ---
 st.set_page_config(page_title="FoodHub Chatbot", page_icon="🍽️", layout="wide")
@@ -186,6 +188,8 @@ if st.session_state.authenticated:
         prompt = st.chat_input("Ask about your order, offers, or menu…")
         if prompt:
             st.session_state.chat_history.append({"role":"user","content":prompt})
-            reply = "hello"                    # swap with real LLM/Agent call
+            with st.spinner("Let me check that for you..."):
+                raw_response = order_query_tool_func(st.session_state.customer_id, prompt)
+                reply = answer_tool_func(raw_response)
             st.session_state.chat_history.append({"role":"assistant","content":reply})
             st.rerun()
