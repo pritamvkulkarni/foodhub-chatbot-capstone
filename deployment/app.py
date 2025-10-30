@@ -185,7 +185,7 @@ if st.session_state.authenticated:
                     )
 
         # 2) input → append → bot → append → rerun
-        prompt = st.chat_input("Ask about your order, offers, or menu…")
+        prompt = st.chat_input("Ask about your order or menu...")
         if prompt:
             st.session_state.chat_history.append({"role":"user","content":prompt})
             with st.spinner("Let me check that for you..."):
