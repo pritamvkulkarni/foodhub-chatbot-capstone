@@ -20,7 +20,7 @@ def is_valid_customer(customer_id: str) -> bool:
         cursor = conn.cursor()
 
         # Run a simple query to check existence
-        cursor.execute("SELECT 1 FROM customers WHERE customer_id = ?", (cust_id,))
+        cursor.execute("SELECT 1 FROM orders WHERE cust_id = ?", (cust_id,))
         result = cursor.fetchone()
 
         conn.close()

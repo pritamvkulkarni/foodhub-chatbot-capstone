@@ -1,5 +1,4 @@
 
-
 import streamlit as st
 import base64
 from validate_customer import is_valid_customer
@@ -70,13 +69,13 @@ if not st.session_state.authenticated:
 
             if submitted:
                 # Add your login logic here
-                #if is_valid_customer(customer_id) and password == "foodhub123":
-                st.session_state.authenticated = True
-                st.session_state.customer_id = customer_id
-                st.rerun()
-               # else:
-               #     st.error("Invalid credentials. Please try again.")
-               #     st.rerun()
+                if is_valid_customer(customer_id) and password == "foodhub123":
+                    st.session_state.authenticated = True
+                    st.session_state.customer_id = customer_id
+                    st.rerun()
+                else:
+                    st.error("Invalid credentials. Please try again.")
+                    st.rerun()
                 
 # --- Chatbot Interface ---
 if st.session_state.authenticated:
@@ -173,6 +172,5 @@ if st.session_state.authenticated:
             st.session_state.chat_history.append({"role":"user","content":prompt})
             reply = "hello"                    # swap with real LLM/Agent call
             st.session_state.chat_history.append({"role":"assistant","content":reply})
-            st.rerun()
-        
+            st.rerun()    
     
