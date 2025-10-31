@@ -1,88 +1,458 @@
-from langchain.sql_database import SQLDatabase
+# 12.4
+# ================================================================
+#  FILE: sql_agent.py
+#  MODULE: FoodHub Secure SQL Query Handler (Groq-exclusive)
+# ---------------------------------------------------------------
+#  PURPOSE:
+#  Safely processes natural language queries into secure, read-only
+#  SQL statements using Groq-powered deterministic LLM reasoning.
+#
+#  KEY FEATURES:
+#  ✅ SELECT-only enforcement (no data modification)
+#  ✅ Restricted to specific cust_id
+#  ✅ Anti-enumeration and anti-destructive query filters
+#  ✅ Dynamic schema inspection and caching
+#  ✅ Deterministic (low-temperature) LLM for reproducibility
+# ================================================================
+
+import os
+import re
+import sqlite3
+import textwrap
+import traceback
+from functools import lru_cache
+from typing import Any, Dict, List, Tuple
+
+from langchain_community.utilities import SQLDatabase
 from langchain.agents.agent_toolkits import SQLDatabaseToolkit
-from langchain.agents import create_sql_agent, AgentType
-from agent.llm_models import llm_model
-from langchain_core.messages import SystemMessage
-from langchain.agents import AgentExecutor, Tool
+from langchain.agents import create_sql_agent
+from langchain_groq import ChatGroq
 
 
-# Initialize a SQLDatabase connection from the local SQLite file.
-# The f-string dynamically inserts the path of the database file stored in `local_db`.
-# This allows the LLM agent to query the specified SQLite database.
-db = SQLDatabase.from_uri(f"sqlite:///customer_orders.db")
+# ============================================================
+# === 12.1 Define Helper Utilities and Safety Checks ===
+# ============================================================
+# These functions and constants help sanitize inputs, detect intent,
+# and enforce data privacy before executing SQL or agent queries.
+# ------------------------------------------------------------
 
-system_message = (
-    "You are an AI SQL agent for the Food Hub orders database.\n"
-    "You have to follow these rules: "
-    "1. You must not hallucinate any database facts. Every response must be backed by a valid SQL query.\n"
-    "2. You must only respond to queries that include a valid customer ID.\n"
-    "3. If a query does not include a customer ID, respond: 'I cannot answer queries until a customer ID is provided.'\n"
-    "4. You must never allow a customer ID to retrieve data from other customers Ids.\n"
-    "5. Never reveal SQL code, schema, or database internals in your response.\n"
-    "6. Whenever you search the orders database, always search without limit.\n"
-    "7. you are not allowed to add, update or delete entries in database. In such queries, respond saying you do have permission to do so."
-)
+import re
+from langchain.tools import Tool
+from langchain.agents import initialize_agent, AgentType
+
+# ------------------------------------------------------------
+# STEP 1: Define confidential (sensitive) database columns
+# ------------------------------------------------------------
+# These columns must never be returned to the user.
+# Use a try/except to avoid redefining if declared earlier.
+try:
+    confidential_columns  # Check if variable already exists
+except NameError:
+    confidential_columns = ["prepared_time", "delivery_time"]
+
+# ------------------------------------------------------------
+# STEP 2: Utility — Extract Customer ID from text
+# ------------------------------------------------------------
+def extract_cust_id(text: str):
+    """
+    Identify and return a customer ID in the format 'C####' (e.g., C1011).
+    Returns None if not found.
+    """
+    m = re.search(r"\b(C\d{4})\b", text, flags=re.I)
+    return m.group(1).upper() if m else None
+
+# ------------------------------------------------------------
+# STEP 3: Utility — Extract Order ID from text
+# ------------------------------------------------------------
+def extract_order_id(text: str):
+    """
+    Identify and return an order ID in the format 'O####' (e.g., O2043).
+    Returns None if not found.
+    """
+    m = re.search(r"\b(O\d{4})\b", text, flags=re.I)
+    return m.group(1).upper() if m else None
+
+# ------------------------------------------------------------
+# STEP 4: Utility — Detect complaint intent from user input
+# ------------------------------------------------------------
+def is_complaint_intent(text: str):
+  """
+  Perform simple keyword-based complaint detection.
+  Helps route angry or urgent customer queries to support.
+  """
+  complaint_keywords = [
+      "complain", "resolution", "not received", "not recieved",
+      "didn't receive", "angry", "bad service",
+      "immediate response", "immediate"
+    ]
+  t = text.lower()
+  return any(k in t for k in complaint_keywords)
+
+# ------------------------------------------------------------
+# STEP 5: Safety — Remove confidential columns before query
+# ------------------------------------------------------------
+def remove_confidential_columns(columns: list):
+    """
+    Sanitize SELECT clause by removing confidential columns
+    (like timestamps or internal tracking fields) from results.
+    """
+    return [c for c in columns if c not in confidential_columns]
+
+# ------------------------------------------------------------
+# STEP 5: Safety — Remove confidential columns before query
+# ------------------------------------------------------------
+def remove_confidential_columns(columns: list):
+    """
+    Sanitize SELECT clause by removing confidential columns
+    (like timestamps or internal tracking fields) from results.
+    """
+    return [c for c in columns if c not in confidential_columns]
 
 
-# Initialize the SQL database toolkit by combining the database connection (db)
-# and the chosen LLM model (llm_model). The toolkit allows the agent to query
-# the database intelligently using the language model.
-toolkit = SQLDatabaseToolkit(db=db, llm=llm_model)  # Pass the llm object directly
+# ================================================================
+#  SECTION 1: LLM Factory (Groq-only)
+# ---------------------------------------------------------------
+#  Builds a deterministic ChatGroq model for SQL reasoning.
+#  Determinism ensures consistent, repeatable query responses.
+# ================================================================
+def _make_deterministic_llm():
+    """
+    Build a low-temperature ChatGroq LLM for SQL reasoning.
+    Deterministic responses preferred for reproducible database answers.
+    """
+    # STEP 1: Check for presence of GROQ_API_KEY in environment
+    # groq_api_key = os.getenv("GROQ_API_KEY")
+    if not groq_api_key:
+        raise RuntimeError("Missing GROQ_API_KEY environment variable.")
 
-# Create the SQL agent using the specified LLM and toolkit.
-# The system_message provides role/context (e.g., "You are a helpful SQL assistant").
-# verbose=False disables extra console logs for cleaner output.
-db_agent = create_sql_agent(
-        llm=llm_model,
-        toolkit=toolkit,
-        verbose=False,
-        system_message=SystemMessage(system_message)
+    # STEP 2: Instantiate ChatGroq LLM with very low temperature
+    return ChatGroq(
+        model="meta-llama/llama-4-scout-17b-16e-instruct",
+        groq_api_key=groq_api_key,
+        temperature=0.05,
     )
 
-# Wrap the created agent with an AgentExecutor, which manages query execution flow.
-# It also adds error-handling, iteration limits, and execution timeouts.
-db_agent_executor = AgentExecutor.from_agent_and_tools(
-    agent=db_agent.agent,          # The core LLM-based SQL agent
-    tools=db_agent.tools,          # Toolkit tools (e.g., SQL querying utilities)
-    handle_parsing_errors=True,    # Enables auto-retry when LLM outputs invalid SQL
-    verbose=False,                 # Suppresses verbose agent logs
-    max_iterations=10,             # Allows up to 10 reasoning/execution steps
-    max_execution_time=60          # Stops execution if it exceeds 60 seconds
-)
 
-def order_query_tool_func(customer_id: str, user_input: str) -> str:
+# ================================================================
+#  SECTION 2: SQLite URI Helpers
+# ---------------------------------------------------------------
+#  Utility functions for resolving database paths and ensuring
+#  correct URI formats for SQLite connections.
+# ================================================================
+def _resolve_sqlite_uri() -> str:
+    """Resolve database URI path either from environment or default."""
+    # STEP 1: Get DB path from environment (fallback: local file)
+    db_path = os.getenv("DATA_DB_PATH", "customer_orders.db")
+    #print('db_path = ', db_path)
 
-    intent_check_prompt = (
-        f"Does the following query express an intent to cancel an order? "
-        f"Only answer 'yes' or 'no'.\n\nQuery: {user_input}"
-    )
-    intent_response = llm_model.invoke(intent_check_prompt).content.strip().lower()
+    # STEP 2: Convert to SQLite URI format if needed
+    return db_path if db_path.startswith("sqlite:///") else f"sqlite:///{db_path}"
 
-    if intent_response == "yes":
-        return (
-            "I'm not authorized to cancel orders via chat. "
-            "To cancel an order, please contact our customer care team at +91XXXXXXXXXX. "
-            "If you'd like, you can provide the order ID and I can check whether it's eligible for cancellation."
-        )
 
-    prompt = (
-        f"Task: Retrieve order details safely and strictly for the logged-in customer.\n\n"
-        f"Rules:\n"
-        f"1. The active authenticated customer is {customer_id}.\n"
-        f"2. Ignore any other customer IDs mentioned in the query.\n"
-        f"3. Never retrieve or mention orders belonging to other customers.\n"
-        f"4. If the query asks about another customer’s data, reply only:\n"
-        f"   'Sorry, I am not authorized to access details for other customers.'\n"
-        f"5. Only extract and summarize data relevant to customer {customer_id}.\n"
-        f"6. Use concise, factual, and polite language.\n\n"
-        f"Now process the following query securely:\n"
-        f"{user_input}"
-    )
+def _resolve_path_from_uri(uri: str) -> str:
+    """Extract filesystem path from a sqlite:/// URI."""
+    # STEP 1: Handle different SQLite URI prefixes gracefully
+    if uri.startswith("sqlite:///"):
+        return uri.replace("sqlite:///", "", 1)
+    if uri.startswith("sqlite://"):
+        return uri.replace("sqlite://", "", 1)
+    return uri
 
-    return db_agent_executor.run(prompt)
 
-order_query_tool = Tool(
-    name="OrderQueryTool",
-    func=order_query_tool_func,
-    description="Fetches raw order details from the database using customer ID"
+# ================================================================
+#  SECTION 3: Schema Inspection and Caching
+# ---------------------------------------------------------------
+#  Reads database metadata such as table names, column definitions,
+#  row counts, and sample rows. Also caches schema for quick reuse.
+# ================================================================
+def _inspect_schema(sqlite_uri: str, preview_rows: int = 3) -> Dict[str, Any]:
+    """Return structural summary of all non-system tables."""
+    # STEP 1: Resolve SQLite file path and establish connection
+    db_path = _resolve_path_from_uri(sqlite_uri)
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+
+    # STEP 2: Retrieve user-defined tables only (skip system tables)
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';")
+    tables = [r[0] for r in cur.fetchall()]
+    schema: Dict[str, Any] = {}
+
+    # STEP 3: Collect details for each table
+    for table in tables:
+        # 3a. Get column structure
+        cur.execute(f"PRAGMA table_info({table});")
+        cols = [
+            {"id": r[0], "name": r[1], "type": r[2], "notnull": r[3], "default": r[4], "pk": r[5]}
+            for r in cur.fetchall()
+        ]
+
+        # 3b. Get total row count
+        try:
+            cur.execute(f"SELECT COUNT(*) FROM {table};")
+            count = cur.fetchone()[0]
+        except sqlite3.Error:
+            count = None
+
+        # 3c. Get sample preview rows
+        try:
+            cur.execute(f"SELECT * FROM {table} LIMIT {preview_rows};")
+            sample = cur.fetchall()
+        except sqlite3.Error:
+            sample = []
+
+        schema[table] = {"columns": cols, "row_count": count, "sample": sample}
+
+    # STEP 4: Close DB connection
+    conn.close()
+    return schema
+
+
+def _schema_summary(schema: Dict[str, Any], max_lines: int = 20) -> str:
+    """Compact text summary for embedding in LLM system prompts."""
+    # STEP 1: Prepare summary lines for each table
+    lines: List[str] = []
+    for table, meta in schema.items():
+        lines.append(f"Table: {table} (rows: {meta.get('row_count')})")
+        for col in meta.get("columns", [])[:max_lines]:
+            pk = " PRIMARY_KEY" if col.get("pk") else ""
+            lines.append(f"  - {col.get('name')} {col.get('type')}{pk}")
+        if len(meta.get("columns", [])) > max_lines:
+            lines.append(f"  - ... ({len(meta.get('columns', []))} columns total)")
+    return "\n".join(lines)
+
+
+@lru_cache(maxsize=1)
+def _cached_schema(sqlite_uri: str, preview_rows: int = 3) -> Tuple[Dict[str, Any], str]:
+    """Cache schema and textual summary to avoid repeated inspections."""
+    # STEP 1: Fetch schema metadata and summarize
+    schema = _inspect_schema(sqlite_uri, preview_rows)
+    summary = _schema_summary(schema)
+    return schema, summary
+
+
+# ================================================================
+#  SECTION 4: SQL Agent Construction
+# ---------------------------------------------------------------
+#  Creates the SQL agent object with system prompts and schema
+#  embedded for contextual LLM reasoning. Enforces SELECT-only mode.
+# ================================================================
+def _build_sql_agent(
+    db_uri: str,
+    llm=None,
+    preview_rows: int = 3,
+    safe_limit: int = 100,
+):
+    """
+    Create SQL agent with schema embedding and strict rule context.
+    """
+    # STEP 1: Initialize deterministic LLM if not provided
+    llm = llm or _make_deterministic_llm()
+
+    # STEP 2: Load or cache database schema
+    schema, schema_text = _cached_schema(db_uri, preview_rows)
+
+    # STEP 3: Prepare strict system prompt for LLM
+    sys_prompt = textwrap.dedent(f"""
+    You are FoodHub’s SQL assistant with read-only access to a customer database.
+    MANDATORY CONSTRAINTS:
+    1. Run only verified SQL queries — never assume unseen data.
+    2. STRICTLY SELECT-only. No INSERT, UPDATE, DELETE, or schema modification.
+    3. For unfiltered requests, cap results with LIMIT {safe_limit} and mention it in response.
+    4. Include the executed SQL and a one-line plain English interpretation.
+    5. If unsure, infer column meaning using the schema summary below.
+    SCHEMA SNAPSHOT:
+    {schema_text}
+    """)
+
+    # STEP 4: Create SQL agent using LangChain components
+    db = SQLDatabase.from_uri(db_uri)
+    toolkit = SQLDatabaseToolkit(db=db, llm=llm)
+    agent = create_sql_agent(llm=llm, toolkit=toolkit, system_message=sys_prompt, verbose=False, top_k=100)
+
+    return agent, schema, schema_text
+
+
+# ================================================================
+#  SECTION 5: Policy Filters and Safety Patterns
+# ---------------------------------------------------------------
+#  Regex filters to identify restricted query intents such as:
+#  - Enumeration of all records
+#  - Destructive (write) operations
+#  - Refund/cancellation requests for human escalation
+# ================================================================
+_NEGATE_PATTERNS = [
+    r"\bdoesn't\b", r"\bdoes not\b", r"\bnot\b", r"\bdo not\b",
+    r"\bavoid\b", r"\bdon't\b"
+]
+_ENUM_PATTERNS = [
+    r"\ball\b", r"\bevery\b", r"\bentire\b", r"\bcomplete\b", r"\bselect\s+\*\b",
+    r"\bjoin\b", r"\bunion\b", r"\bcross\b", r"\bdatabase\b", r"\bpragma\b"
+]
+_DESTRUCT_PATTERNS = [
+    r"\bdelete\b", r"\bmodify\b", r"\binsert\b", r"\bcreate\b", r"\balter\b",     # remove 'update'
+    r"\bdrop\b", r"\btruncate\b", r"\battach\b", r"\bdetach\b"
+]
+_HUMAN_HANDOFF_PATTERNS = [r"\brefund\b", r"\bcancel\b", r"\breturn\b"]
+
+def _matches_any(patterns: List[str], text: str) -> bool:
+    """Check if user query matches any restricted pattern."""
+    # STEP 1: Convert text to lowercase and compare with known patterns
+    query = (text or "").lower()
+    return any(re.search(p, query) for p in patterns)
+
+# ================================================================
+#  _query_id_match
+# ---------------------------------------------------------------
+#  Check if the query contains any customer ID and if that matches with
+#  locked in customer ID.
+#  if True, proceed further to process; else, retrun False.
+# ================================================================
+def _query_id_match(db_uri: str, cust_id: str, query: str) -> bool:
+    """Verify that cust_id exists in at least one expected table."""
+    # STEP 1: Resolve file path and connect to SQLite
+    db_path = _resolve_path_from_uri(db_uri)
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+
+    # Step 2: Run SQL directly using the connection
+    qc = f"SELECT order_id FROM orders WHERE cust_id='{cust_id}';"
+    pd_order_id = pd.read_sql_query(qc, conn)
+    db_order_id = pd_order_id.iloc[0, 0]
+
+    # STEP 3:
+    # Extract customer ID if present in the query
+    hello = 0
+    return_value = True
+    qc_cid = []
+    cidcnt = 0
+    for match in re.findall(r"\bC\d{3,6}\b", query, flags=re.IGNORECASE):
+        if match:
+            cidcnt += 1
+            qc_cid = match.upper()
+            if qc_cid == cust_id:
+                hello = 1
+                return_value = True
+            else:
+                return_value = False
+
+    if not qc_cid:
+        hello = 2
+        return_value = True
+
+    if cidcnt > 1:
+        hello = 3
+        return_value = False
+
+    # Extract order ID if present in the query
+    qc_oid = []
+    oidcnt = 0
+    for match in re.findall(r"\bO\d{3,6}\b", query, flags=re.IGNORECASE):
+        if match:
+            oidcnt += 1
+            qc_oid = match.upper()
+            if qc_oid == db_order_id:
+                hello = 4
+                return_value = True
+            else:
+                return_value = False
+
+    if not qc_oid and not qc_cid:
+        hello = 5
+        return_value = True
+
+    if oidcnt > 1 or cidcnt > 1:
+        hello = 6
+        return_value = False
+
+    #print('hello = ', hello)
+    print('return_value = ', return_value)
+    #print('qc_cid = ', qc_cid)
+    #print('qc_oid = ', qc_oid)
+    print('db_order_id = ', db_order_id)
+    #print('cust_id = ', cust_id)
+    #print('query = ', query)
+
+    # STEP 4: Close connection if not found
+    conn.close()
+    return return_value
+
+
+# ================================================================
+#  SECTION 6: Main Query Executor
+# ---------------------------------------------------------------
+#  Handles incoming user requests securely by:
+#  1. Enforcing safety policies
+#  2. Restricting scope to given cust_id
+#  3. Invoking LLM for SQL generation and interpretation
+# ================================================================
+def order_query_tool_func(cust_id: str, user_query: str) -> str:
+    """
+    Process an SQL-related natural language request securely.
+    Enforces cust_id scope, safe syntax, and deterministic LLM logic.
+    """
+    try:
+        # STEP 1: Policy-level checks — detect sensitive or restricted intents
+        if not _matches_any(_NEGATE_PATTERNS, user_query):
+        # For queries containing negative patterns, use LLM's decisions.
+            if _matches_any(_HUMAN_HANDOFF_PATTERNS, user_query):
+                return ("I’ve sent your refund or cancellation request to our human support team. "
+                        "They’ll verify it and update you soon.")
+
+            if _matches_any(_DESTRUCT_PATTERNS, user_query):
+                return ("Destructive database actions aren’t permitted. "
+                        "I can connect you to a human agent if you’d like help with changes.")
+
+            if _matches_any(_ENUM_PATTERNS, user_query):
+                return ("For security, I can’t display full database contents or every customer’s data. "
+                        "Please ask about your own order or account instead.")
+
+        # STEP 2: Initialize SQL agent and deterministic model
+        db_uri = _resolve_sqlite_uri()
+        llm = _make_deterministic_llm()
+        agent, schema, schema_text = _build_sql_agent(db_uri, llm)
+
+        # STEP 3: Validate if customer identity is provided in the query will match the id of locked in customer.
+        if not _query_id_match(db_uri, cust_id, user_query):
+            return ("Sorry, I cannot share records pertaining to another customer for privacy reasons. "
+                    "Please recheck your account details or reach support for assistance.")
+
+        # STEP 4: Guarded prompt preparation for safe LLM execution
+        guarded_prompt = textwrap.dedent(f"""
+        {user_query}
+        HARD REQUIREMENTS:
+        - Restrict all SQL to cust_id = '{cust_id}'.
+        - Perform SELECT-only operations.
+        - Avoid exposing table structures or entire datasets.
+        - Use LIMIT for large sets and note it in explanation.
+        - Respond clearly with a short natural summary and the executed SQL.
+        - Never exceed 15 seconds of reasoning time.
+        """)
+
+        # STEP 5: Execute SQL agent safely
+        output = agent.invoke({"input": guarded_prompt})
+        message = output.get("output", str(output)) if isinstance(output, dict) else str(output)
+
+        # STEP 6: Handle empty or null responses gracefully
+        if not message or message.strip().lower() in {"none", "null", "no results", "[]"}:
+            return "Sorry, I couldn’t find any data matching your request."
+
+        return message
+
+    except Exception:
+        # STEP 7: Catch and return formatted traceback for debugging
+        return f"Query execution error.\n```\n{traceback.format_exc()}\n```"
+
+
+# ================================================================
+#  SECTION 7: LangChain Tool Wrapper
+# ---------------------------------------------------------------
+#  Wraps the SQL query executor as a callable Tool.
+#  Enables integration with agent workflows that need database access.
+# ================================================================
+from langchain.tools import Tool
+
+OrderQueryTool = Tool(
+    name="order_query",
+    func=lambda q, session_cust_id=None: order_query_tool_func(q, session_cust_id),
+    description="Use this tool to fetch order-related (read-only) info for a customer's order. Requires customer id from session. Blocks confidential fields."
 )

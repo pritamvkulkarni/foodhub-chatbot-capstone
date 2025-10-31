@@ -192,11 +192,14 @@ if st.session_state.authenticated:
                     )
 
         # 2) input → append → bot → append → rerun
-        prompt = st.chat_input("Ask about your order or menu...")
-        if prompt:
-            st.session_state.chat_history.append({"role":"user","content":prompt})
+        user_input = st.chat_input("Ask about your order or menu...")
+        if user_input:
+            st.session_state.chat_history.append({"role":"user","content":user_input})
             with st.spinner("Let me check that for you..."):
-                raw_response = order_query_tool_func(st.session_state.customer_id, prompt)
-                reply = answer_tool_func(raw_response)
-            st.session_state.chat_history.append({"role":"assistant","content":reply})
+              # Step 1: Query order details using SQL Agent
+              raw_response = order_query_tool_func(customer_id,user_input)
+
+              # Step 2: Refine response using Answer Tool
+              final_response = answer_tool_func(raw_response, user_input, customer_id, customer_id)
+            st.session_state.chat_history.append({"role":"assistant","content":final_response})
             st.rerun()
