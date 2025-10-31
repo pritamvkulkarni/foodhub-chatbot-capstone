@@ -198,6 +198,5 @@ if st.session_state.authenticated:
             with st.spinner("Let me check that for you..."):
                 raw_response = order_query_tool_func(st.session_state.customer_id, prompt)
                 reply = answer_tool_func(raw_response)
-                reply = "hello"
             st.session_state.chat_history.append({"role":"assistant","content":reply})
             st.rerun()
