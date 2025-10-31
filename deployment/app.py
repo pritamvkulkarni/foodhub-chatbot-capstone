@@ -1,5 +1,4 @@
 
-
 import streamlit as st
 import base64
 from validate_customer import is_valid_customer
@@ -81,9 +80,17 @@ if not st.session_state.authenticated:
             st.image("foodhub_logo.png", width=500)
         with col2:
             st.markdown("<h1 style='color: #ff4b4b; padding-top: 10px;'>Welcome to FoodHub Chatbot</h1>", unsafe_allow_html=True)
+        # Instructional message in black
+        st.markdown("<p style='color: black; font-size: 16px;'>Please enter customer ID and password to continue</p>", unsafe_allow_html=True)
         with st.form("login_form"):
+
+            # Labels in black using label_visibility workaround
+            #st.markdown("<label style='color: black;'>Customer ID</label>", unsafe_allow_html=True)
             customer_id = st.text_input("Customer ID", placeholder="eg: C1018")
+
+            #st.markdown("<label style='color: black;'>Password</label>", unsafe_allow_html=True)
             password = st.text_input("Password", type="password")
+
             submitted = st.form_submit_button("Login")
 
             if submitted:
@@ -189,8 +196,8 @@ if st.session_state.authenticated:
         if prompt:
             st.session_state.chat_history.append({"role":"user","content":prompt})
             with st.spinner("Let me check that for you..."):
-                #raw_response = order_query_tool_func(st.session_state.customer_id, prompt)
-                #reply = answer_tool_func(raw_response)
+                raw_response = order_query_tool_func(st.session_state.customer_id, prompt)
+                reply = answer_tool_func(raw_response)
                 reply = "hello"
             st.session_state.chat_history.append({"role":"assistant","content":reply})
             st.rerun()
