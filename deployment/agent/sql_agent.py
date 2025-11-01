@@ -39,6 +39,7 @@ from langchain_groq import ChatGroq
 import re
 from langchain.tools import Tool
 from langchain.agents import initialize_agent, AgentType
+import pandas as pd
 
 # ------------------------------------------------------------
 # STEP 1: Define confidential (sensitive) database columns
@@ -168,7 +169,7 @@ def _resolve_path_from_uri(uri: str) -> str:
 def _inspect_schema(sqlite_uri: str, preview_rows: int = 3) -> Dict[str, Any]:
     """Return structural summary of all non-system tables."""
     # STEP 1: Resolve SQLite file path and establish connection
-    db_path = _resolve_path_from_uri(sqlite_uri)
+    x = _resolve_path_from_uri("customer_orders.db")
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
 
