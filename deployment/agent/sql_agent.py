@@ -121,7 +121,7 @@ def _make_deterministic_llm():
     Deterministic responses preferred for reproducible database answers.
     """
     # STEP 1: Check for presence of GROQ_API_KEY in environment
-    # groq_api_key = os.getenv("GROQ_API_KEY")
+    groq_api_key = os.getenv("GROQ_API_KEY")
     if not groq_api_key:
         raise RuntimeError("Missing GROQ_API_KEY environment variable.")
 
