@@ -449,10 +449,10 @@ def order_query_tool_func(cust_id: str, user_query: str) -> str:
 #  Wraps the SQL query executor as a callable Tool.
 #  Enables integration with agent workflows that need database access.
 # ================================================================
-from langchain.tools import Tool
+# from langchain.tools import Tool
 
-OrderQueryTool = Tool(
-    name="order_query",
-    func=lambda q, session_cust_id=None: order_query_tool_func(q, session_cust_id),
-    description="Use this tool to fetch order-related (read-only) info for a customer's order. Requires customer id from session. Blocks confidential fields."
-)
+# OrderQueryTool = Tool(
+#     name="order_query",
+#     func=lambda q, session_cust_id=None: order_query_tool_func(q, session_cust_id),
+#     description="Use this tool to fetch order-related (read-only) info for a customer's order. Requires customer id from session. Blocks confidential fields."
+# )

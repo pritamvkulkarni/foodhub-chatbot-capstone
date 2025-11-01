@@ -252,8 +252,8 @@ def answer_tool_func(user_query: str, orig_query: str, cust_id: str, customer_na
 #  Wraps the chat handler as a LangChain Tool so that it can be
 #  called within multi-agent workflows or pipelines.
 # ================================================================
-AnswerTool = Tool(
-    name="answer_tool",
-    func=lambda raw, q, session_cust_id=None, customer_name=None: answer_tool_func(raw, q, session_cust_id, customer_name),
-    description="Format raw DB results into a brief, polite user-facing message. Enforces business rules (cancelled/completed messaging, escalation)."
-)
+# AnswerTool = Tool(
+#     name="answer_tool",
+#     func=lambda raw, q, session_cust_id=None, customer_name=None: answer_tool_func(raw, q, session_cust_id, customer_name),
+#     description="Format raw DB results into a brief, polite user-facing message. Enforces business rules (cancelled/completed messaging, escalation)."
+# )
