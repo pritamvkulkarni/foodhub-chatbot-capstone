@@ -32,7 +32,7 @@ def make_refiner(temperature: float = 0.7):
 
     # Step 1: Retrieve API key from environment
     # (Expected to be set externally for secure authentication)
-    #groq_api_key = os.getenv("GROQ_API_KEY")
+    groq_api_key = os.getenv("GROQ_API_KEY")
     if not groq_api_key:
         raise RuntimeError("Missing GROQ_API_KEY environment variable for LLM access.")
 
