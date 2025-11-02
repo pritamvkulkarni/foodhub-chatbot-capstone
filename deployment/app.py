@@ -14,7 +14,7 @@ def get_base64_image(image_path):
         encoded = base64.b64encode(img_file.read()).decode()
     return encoded
 
-image_base64 = get_base64_image("foodhub_background_jpg.jpg")  # Make sure this file exists
+image_base64 = get_base64_image("foodhub_background.jpg")  # Make sure this file exists
 
 # --- Session State Initialization ---
 if "authenticated" not in st.session_state:
@@ -200,6 +200,6 @@ if st.session_state.authenticated:
               raw_response = order_query_tool_func(customer_id,user_input)
 
               # Step 2: Refine response using Answer Tool
-              final_response = answer_tool_func(raw_response, user_input, customer_id, customer_id)
+              final_response = answer_tool_func(raw_response)
             st.session_state.chat_history.append({"role":"assistant","content":final_response})
             st.rerun()
