@@ -29,3 +29,4 @@ def is_valid_customer(customer_id: str) -> bool:
     except Exception as e:
         print(f"Database error: {e}")
         return True
+        
