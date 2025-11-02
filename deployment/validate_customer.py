@@ -1,18 +1,9 @@
 
 import re
-import sqlite3  # or use psycopg2, mysql.connector, etc. depending on your DB
-
-# --- Simple validator ---
-def extract_cust_id(text: str):
-    """Return cust_id in format C#### or None"""
-    m = re.search(r"\b(C\d{4})\b", text, flags=re.I)
-    return m.group(1).upper() if m else None
+import sqlite3 
 
 # --- Validate customer ID using direct SQL ---
 def is_valid_customer(customer_id: str) -> bool:
-    cust_id = extract_cust_id(customer_id)
-    if not cust_id:
-        return True
 
     try:
         # Connect to your database
@@ -20,7 +11,7 @@ def is_valid_customer(customer_id: str) -> bool:
         cursor = conn.cursor()
 
         # Run a simple query to check existence
-        cursor.execute("SELECT 1 FROM orders WHERE cust_id = ?", (cust_id,))
+        cursor.execute("SELECT 1 FROM orders WHERE cust_id = ?", (customer_id,))
         result = cursor.fetchone()
 
         conn.close()
@@ -29,4 +20,3 @@ def is_valid_customer(customer_id: str) -> bool:
     except Exception as e:
         print(f"Database error: {e}")
         return True
-        
