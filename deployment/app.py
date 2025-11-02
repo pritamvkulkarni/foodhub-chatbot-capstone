@@ -4,6 +4,7 @@ import base64
 from validate_customer import is_valid_customer
 from agent.chat_agent import answer_tool_func
 from agent.sql_agent import order_query_tool_func
+import sys
 
 # --- App Configuration ---
 st.set_page_config(page_title="FoodHub Chatbot", page_icon="🍽️", layout="wide")
@@ -65,10 +66,10 @@ else:
         }}
         </style>
         <div class="blurred-bg"></div>
-        """,
+        """, 
         unsafe_allow_html=True
     )
-
+    
 
 if not st.session_state.authenticated:
     # Login form
@@ -90,18 +91,25 @@ if not st.session_state.authenticated:
 
             #st.markdown("<label style='color: black;'>Password</label>", unsafe_allow_html=True)
             password = st.text_input("Password", type="password")
-
+            
             submitted = st.form_submit_button("Login")
 
+            print('password submitted by user : ',password, flush=True)
+            sys.stdout.flush()
+            
             if submitted:
                 # Add your login logic here
                 if is_valid_customer(customer_id) and password == "foodhub123":
                     st.session_state.authenticated = True
                     st.session_state.customer_id = customer_id
+                    
+                    print('user {customer_id} successfully authenticated!!', flush=True)
+                    sys.stdout.flush()
+                    
                     st.rerun()
                 else:
                     st.error("Invalid credentials. Please try again.")
-
+                
 # --- Chatbot Interface ---
 if st.session_state.authenticated:
     customer_id = st.session_state.get("customer_id")
@@ -110,8 +118,8 @@ if st.session_state.authenticated:
         st.session_state["chat_history"] = [
             {"role": "assistant", "content": f"Hi! How can I help you today?"}
         ]
-    spacer_left, chat_col, spacer_right = st.columns([2, 4, 1])
-
+    spacer_left, chat_col, spacer_right = st.columns([1, 4, 1])
+    
     with chat_col:
         col1, col2, col3 = st.columns([1, 3, 1])
         with col1:
@@ -133,9 +141,9 @@ if st.session_state.authenticated:
                 st.session_state.chat_history = []
                 st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
-
+                
         st.markdown("---")
-
+        
         # Inject custom CSS for chat bubbles
         st.markdown("""
         <style>
@@ -149,7 +157,6 @@ if st.session_state.authenticated:
             max-width: 80%;
             text-align: right;
         }
-
         .chat-bubble-bot {
             background-color: #f1f0f0;  /* light gray, works on both themes */
             color: #000000;             /* black text */
@@ -199,7 +206,14 @@ if st.session_state.authenticated:
               # Step 1: Query order details using SQL Agent
               raw_response = order_query_tool_func(customer_id,user_input)
 
+              print('Output of order query :',raw_response, flush=True)
+              sys.stdout.flush()
+                
               # Step 2: Refine response using Answer Tool
               final_response = answer_tool_func(raw_response, user_input, customer_id, customer_id)
+
+              print('Output of Answer func tool :',final_response, flush=True)
+              sys.stdout.flush()
+                
             st.session_state.chat_history.append({"role":"assistant","content":final_response})
             st.rerun()

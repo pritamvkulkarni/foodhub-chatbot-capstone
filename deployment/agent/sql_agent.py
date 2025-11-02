@@ -1,3 +1,47 @@
+Hugging Face's logo
+Hugging Face
+Models
+Datasets
+Spaces
+Community
+Docs
+Enterprise
+Pricing
+
+
+Spaces:
+pkulkar
+/
+pk-foodhub-chatbot-new
+
+private
+
+Logs
+App
+Files
+Community
+Settings
+pk-foodhub-chatbot-new
+/
+agent
+/
+sql_agent.py
+
+SudeendraMG's picture
+SudeendraMG
+Update agent/sql_agent.py
+f9525f7
+verified
+about 15 hours ago
+raw
+
+Copy download link
+history
+blame
+edit
+delete
+
+19 kB
 # 12.4
 # ================================================================
 #  FILE: sql_agent.py
@@ -22,6 +66,8 @@ import textwrap
 import traceback
 from functools import lru_cache
 from typing import Any, Dict, List, Tuple
+import sys
+import pandas as pd
 
 from langchain_community.utilities import SQLDatabase
 from langchain.agents.agent_toolkits import SQLDatabaseToolkit
@@ -39,7 +85,16 @@ from langchain_groq import ChatGroq
 import re
 from langchain.tools import Tool
 from langchain.agents import initialize_agent, AgentType
-import pandas as pd
+
+# ------------------------------------------------------------
+# STEP 1: Define confidential (sensitive) database columns
+# ------------------------------------------------------------
+# These columns must never be returned to the user.
+# Use a try/except to avoid redefining if declared earlier.
+try:
+    confidential_columns  # Check if variable already exists
+except NameError:
+    confidential_columns = ["prepared_time", "delivery_time"]
 
 # ------------------------------------------------------------
 # STEP 2: Utility — Extract Customer ID from text
@@ -79,6 +134,26 @@ def is_complaint_intent(text: str):
   t = text.lower()
   return any(k in t for k in complaint_keywords)
 
+# ------------------------------------------------------------
+# STEP 5: Safety — Remove confidential columns before query
+# ------------------------------------------------------------
+def remove_confidential_columns(columns: list):
+    """
+    Sanitize SELECT clause by removing confidential columns
+    (like timestamps or internal tracking fields) from results.
+    """
+    return [c for c in columns if c not in confidential_columns]
+
+# ------------------------------------------------------------
+# STEP 5: Safety — Remove confidential columns before query
+# ------------------------------------------------------------
+def remove_confidential_columns(columns: list):
+    """
+    Sanitize SELECT clause by removing confidential columns
+    (like timestamps or internal tracking fields) from results.
+    """
+    return [c for c in columns if c not in confidential_columns]
+
 
 # ================================================================
 #  SECTION 1: LLM Factory (Groq-only)
@@ -111,13 +186,23 @@ def _make_deterministic_llm():
 #  correct URI formats for SQLite connections.
 # ================================================================
 def _resolve_sqlite_uri() -> str:
-    """Resolve database URI path to the hardcoded value."""
-    return "sqlite:///customer_orders.db"
+    """Resolve database URI path either from environment or default."""
+    # STEP 1: Get DB path from environment (fallback: local file)
+    db_path = os.getenv("DATA_DB_PATH", "customer_orders.db")
+    #print('db_path = ', db_path)
+
+    # STEP 2: Convert to SQLite URI format if needed
+    return db_path if db_path.startswith("sqlite:///") else f"sqlite:///{db_path}"
 
 
 def _resolve_path_from_uri(uri: str) -> str:
-    """Extract filesystem path from the hardcoded sqlite:/// URI."""
-    return "customer_orders.db"
+    """Extract filesystem path from a sqlite:/// URI."""
+    # STEP 1: Handle different SQLite URI prefixes gracefully
+    if uri.startswith("sqlite:///"):
+        return uri.replace("sqlite:///", "", 1)
+    if uri.startswith("sqlite://"):
+        return uri.replace("sqlite://", "", 1)
+    return uri
 
 
 # ================================================================
@@ -129,7 +214,8 @@ def _resolve_path_from_uri(uri: str) -> str:
 def _inspect_schema(sqlite_uri: str, preview_rows: int = 3) -> Dict[str, Any]:
     """Return structural summary of all non-system tables."""
     # STEP 1: Resolve SQLite file path and establish connection
-    conn = sqlite3.connect(_resolve_path_from_uri(sqlite_uri))
+    db_path = _resolve_path_from_uri(sqlite_uri)
+    conn = sqlite3.connect(db_path)
     cur = conn.cursor()
 
     # STEP 2: Retrieve user-defined tables only (skip system tables)
@@ -325,13 +411,15 @@ def _query_id_match(db_uri: str, cust_id: str, query: str) -> bool:
         return_value = False
 
     #print('hello = ', hello)
-    print('return_value = ', return_value)
+    print('return_value = ', return_value, flush=True)
+    sys.stdout.flush()
     #print('qc_cid = ', qc_cid)
     #print('qc_oid = ', qc_oid)
-    print('db_order_id = ', db_order_id)
+    print('db_order_id = ', db_order_id, flush=True)
     #print('cust_id = ', cust_id)
     #print('query = ', query)
-
+    sys.stdout.flush()
+    
     # STEP 4: Close connection if not found
     conn.close()
     return return_value
@@ -345,7 +433,6 @@ def _query_id_match(db_uri: str, cust_id: str, query: str) -> bool:
 #  2. Restricting scope to given cust_id
 #  3. Invoking LLM for SQL generation and interpretation
 # ================================================================
-import sys
 def order_query_tool_func(cust_id: str, user_query: str) -> str:
     """
     Process an SQL-related natural language request securely.
@@ -356,42 +443,33 @@ def order_query_tool_func(cust_id: str, user_query: str) -> str:
         if not _matches_any(_NEGATE_PATTERNS, user_query):
         # For queries containing negative patterns, use LLM's decisions.
             if _matches_any(_HUMAN_HANDOFF_PATTERNS, user_query):
-                print("11111111", flush=True)
-                sys.stdout.flush()
                 return ("I’ve sent your refund or cancellation request to our human support team. "
                         "They’ll verify it and update you soon.")
 
-
             if _matches_any(_DESTRUCT_PATTERNS, user_query):
-                print("2222222222", flush=True)
-                sys.stdout.flush()
                 return ("Destructive database actions aren’t permitted. "
                         "I can connect you to a human agent if you’d like help with changes.")
 
-
             if _matches_any(_ENUM_PATTERNS, user_query):
-                print("33333333", flush=True)
-                sys.stdout.flush()
                 return ("For security, I can’t display full database contents or every customer’s data. "
                         "Please ask about your own order or account instead.")
-
 
         # STEP 2: Initialize SQL agent and deterministic model
         db_uri = _resolve_sqlite_uri()
         llm = _make_deterministic_llm()
         agent, schema, schema_text = _build_sql_agent(db_uri, llm)
 
-        print("444444444444", flush=True)
+        print("Debug: order_query_tool_func... STEP2 completed", flush=True)
         sys.stdout.flush()
 
         # STEP 3: Validate if customer identity is provided in the query will match the id of locked in customer.
         if not _query_id_match(db_uri, cust_id, user_query):
-            print("5555555555555", flush=True)
-            sys.stdout.flush()
             return ("Sorry, I cannot share records pertaining to another customer for privacy reasons. "
                     "Please recheck your account details or reach support for assistance.")
 
-
+        print("Debug: order_query_tool_func... STEP3 completed", flush=True)
+        sys.stdout.flush()
+        
         # STEP 4: Guarded prompt preparation for safe LLM execution
         guarded_prompt = textwrap.dedent(f"""
         {user_query}
@@ -408,18 +486,17 @@ def order_query_tool_func(cust_id: str, user_query: str) -> str:
         output = agent.invoke({"input": guarded_prompt})
         message = output.get("output", str(output)) if isinstance(output, dict) else str(output)
 
+        print("Debug: order_query_tool_func... STEP5 completed", flush=True)
+        sys.stdout.flush()
+        
         # STEP 6: Handle empty or null responses gracefully
         if not message or message.strip().lower() in {"none", "null", "no results", "[]"}:
-            print("66666666666", flush=True)
-            sys.stdout.flush()
             return "Sorry, I couldn’t find any data matching your request."
 
         return message
 
     except Exception:
         # STEP 7: Catch and return formatted traceback for debugging
-        print("777777777", flush=True)
-        sys.stdout.flush()
         return f"Query execution error.\n```\n{traceback.format_exc()}\n```"
 
 
@@ -436,3 +513,4 @@ def order_query_tool_func(cust_id: str, user_query: str) -> str:
 #     func=lambda q, session_cust_id=None: order_query_tool_func(q, session_cust_id),
 #     description="Use this tool to fetch order-related (read-only) info for a customer's order. Requires customer id from session. Blocks confidential fields."
 # )
+
