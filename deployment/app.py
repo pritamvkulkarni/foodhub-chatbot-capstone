@@ -65,10 +65,10 @@ else:
         }}
         </style>
         <div class="blurred-bg"></div>
-        """, 
+        """,
         unsafe_allow_html=True
     )
-    
+
 
 if not st.session_state.authenticated:
     # Login form
@@ -101,7 +101,7 @@ if not st.session_state.authenticated:
                     st.rerun()
                 else:
                     st.error("Invalid credentials. Please try again.")
-                
+
 # --- Chatbot Interface ---
 if st.session_state.authenticated:
     customer_id = st.session_state.get("customer_id")
@@ -110,8 +110,8 @@ if st.session_state.authenticated:
         st.session_state["chat_history"] = [
             {"role": "assistant", "content": f"Hi! How can I help you today?"}
         ]
-    spacer_left, chat_col, spacer_right = st.columns([1, 4, 1])
-    
+    spacer_left, chat_col, spacer_right = st.columns([2, 4, 1])
+
     with chat_col:
         col1, col2, col3 = st.columns([1, 3, 1])
         with col1:
@@ -133,9 +133,9 @@ if st.session_state.authenticated:
                 st.session_state.chat_history = []
                 st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
-                
+
         st.markdown("---")
-        
+
         # Inject custom CSS for chat bubbles
         st.markdown("""
         <style>
