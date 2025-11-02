@@ -46,10 +46,10 @@ import pandas as pd
 # ------------------------------------------------------------
 # These columns must never be returned to the user.
 # Use a try/except to avoid redefining if declared earlier.
-try:
-    confidential_columns  # Check if variable already exists
-except NameError:
-    confidential_columns = ["prepared_time", "delivery_time"]
+#try:
+#    confidential_columns  # Check if variable already exists
+#except NameError:
+confAidential_columns = ["prepared_time", "delivery_time"]
 
 # ------------------------------------------------------------
 # STEP 2: Utility — Extract Customer ID from text
@@ -386,6 +386,7 @@ def _query_id_match(db_uri: str, cust_id: str, query: str) -> bool:
 #  2. Restricting scope to given cust_id
 #  3. Invoking LLM for SQL generation and interpretation
 # ================================================================
+import sys
 def order_query_tool_func(cust_id: str, user_query: str) -> str:
     """
     Process an SQL-related natural language request securely.
@@ -396,26 +397,41 @@ def order_query_tool_func(cust_id: str, user_query: str) -> str:
         if not _matches_any(_NEGATE_PATTERNS, user_query):
         # For queries containing negative patterns, use LLM's decisions.
             if _matches_any(_HUMAN_HANDOFF_PATTERNS, user_query):
+                print("11111111", flush=True)
+                sys.stdout.flush()
                 return ("I’ve sent your refund or cancellation request to our human support team. "
                         "They’ll verify it and update you soon.")
+                
 
             if _matches_any(_DESTRUCT_PATTERNS, user_query):
+                print("2222222222", flush=True)
+                sys.stdout.flush()
                 return ("Destructive database actions aren’t permitted. "
                         "I can connect you to a human agent if you’d like help with changes.")
+                
 
             if _matches_any(_ENUM_PATTERNS, user_query):
+                print("33333333", flush=True)
+                sys.stdout.flush()
                 return ("For security, I can’t display full database contents or every customer’s data. "
                         "Please ask about your own order or account instead.")
+                
 
         # STEP 2: Initialize SQL agent and deterministic model
         db_uri = _resolve_sqlite_uri()
         llm = _make_deterministic_llm()
         agent, schema, schema_text = _build_sql_agent(db_uri, llm)
 
+        print("444444444444", flush=True)
+        sys.stdout.flush()
+
         # STEP 3: Validate if customer identity is provided in the query will match the id of locked in customer.
         if not _query_id_match(db_uri, cust_id, user_query):
+            print("5555555555555", flush=True)
+            sys.stdout.flush()
             return ("Sorry, I cannot share records pertaining to another customer for privacy reasons. "
                     "Please recheck your account details or reach support for assistance.")
+            
 
         # STEP 4: Guarded prompt preparation for safe LLM execution
         guarded_prompt = textwrap.dedent(f"""
@@ -435,12 +451,16 @@ def order_query_tool_func(cust_id: str, user_query: str) -> str:
 
         # STEP 6: Handle empty or null responses gracefully
         if not message or message.strip().lower() in {"none", "null", "no results", "[]"}:
+            print("66666666666", flush=True)
+            sys.stdout.flush()
             return "Sorry, I couldn’t find any data matching your request."
 
         return message
 
     except Exception:
         # STEP 7: Catch and return formatted traceback for debugging
+        print("777777777", flush=True)
+        sys.stdout.flush()
         return f"Query execution error.\n```\n{traceback.format_exc()}\n```"
 
 
